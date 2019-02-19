@@ -115,6 +115,21 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+
+    // Race the LED's on the STM32L4 Discovery board.
+    HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
+    HAL_Delay(100);
+    HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
+    HAL_GPIO_TogglePin(LD4_GPIO_Port, LD4_Pin);
+    HAL_Delay(100);
+    HAL_GPIO_TogglePin(LD4_GPIO_Port, LD4_Pin);
+    HAL_GPIO_TogglePin(LD6_GPIO_Port, LD6_Pin);
+    HAL_Delay(100);
+    HAL_GPIO_TogglePin(LD6_GPIO_Port, LD6_Pin);
+    HAL_GPIO_TogglePin(LD5_GPIO_Port, LD5_Pin);
+    HAL_Delay(100);
+    HAL_GPIO_TogglePin(LD5_GPIO_Port, LD5_Pin);
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
