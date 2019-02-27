@@ -111,6 +111,8 @@ int main(void)
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
 
+  unsigned char msg[] = "Hello World\n";
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -131,6 +133,7 @@ int main(void)
     HAL_GPIO_TogglePin(LD5_GPIO_Port, LD5_Pin);
     HAL_Delay(50);
     HAL_GPIO_TogglePin(LD5_GPIO_Port, LD5_Pin);
+    CDC_Transmit_FS(msg, sizeof(msg));
 
     /* USER CODE END WHILE */
 
