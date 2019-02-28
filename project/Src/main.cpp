@@ -121,6 +121,7 @@ int main(void)
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
 
+  int LEDDelay = 500;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -130,6 +131,20 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
+    // Race the LED's on the STM32L4 Discovery board.
+    HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
+    HAL_Delay(LEDDelay);
+    HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
+    HAL_GPIO_TogglePin(LD4_GPIO_Port, LD4_Pin);
+    HAL_Delay(LEDDelay);
+    HAL_GPIO_TogglePin(LD4_GPIO_Port, LD4_Pin);
+    HAL_GPIO_TogglePin(LD6_GPIO_Port, LD6_Pin);
+    HAL_Delay(LEDDelay);
+    HAL_GPIO_TogglePin(LD6_GPIO_Port, LD6_Pin);
+    HAL_GPIO_TogglePin(LD5_GPIO_Port, LD5_Pin);
+    HAL_Delay(LEDDelay);
+    HAL_GPIO_TogglePin(LD5_GPIO_Port, LD5_Pin);
   }
   /* USER CODE END 3 */
 }
