@@ -54,7 +54,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "usbd_cdc_if.h"
+#include <cstdio>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -121,7 +122,9 @@ int main(void)
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
 
-  int LEDDelay = 500;
+  int LEDDelay = 200;
+  int count = 0;
+  char msg[512];
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -145,6 +148,9 @@ int main(void)
     HAL_GPIO_TogglePin(LD5_GPIO_Port, LD5_Pin);
     HAL_Delay(LEDDelay);
     HAL_GPIO_TogglePin(LD5_GPIO_Port, LD5_Pin);
+    sprintf(msg, "[%d] This is a test of the USB CDC interface.\n", count);
+    CDC_Transmit_FS((unsigned char *)msg, strlen(msg));
+    count++;
   }
   /* USER CODE END 3 */
 }
