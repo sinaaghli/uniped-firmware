@@ -17,13 +17,21 @@ namespace slc {
     {
     public:
         explicit BytesBuffer(size_t capacity);
+
         ~BytesBuffer();
+
         size_t write(const uint8_t source[], size_t count);
+
         size_t read(uint8_t dest[], size_t count);
+
         void reset();
+
         bool empty() const;
+
         bool full() const;
+
         size_t capacity() const;
+
         size_t size() const;
 
     private:
