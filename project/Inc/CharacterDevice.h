@@ -21,14 +21,28 @@ namespace slc {
          * @retval true: can write to the device
          * @retval false: cannot write to the device
          */
-        virtual bool write_ready() = 0;
+        virtual bool write_ready() const = 0;
 
         /** Determine if the device can be read from.
          *
          * @retval true: can read from the device
          * @retval false: cannot read from the device
          */
-        virtual bool read_ready() = 0;
+        virtual bool read_ready() const = 0;
+
+        /** Determine if the device is failed and should be reset.
+         *
+         * @retval true: device is in some failed state
+         * @retval false: device is functioning properly
+         */
+        virtual bool failed() const = 0;
+
+        /** Attempt to reset the device, clearing any errors.
+         *
+         * This will drop any partially received or transmitted packets.
+         *
+         */
+        virtual void reset() = 0;
 
         /** Write bytes to the device.
          *
@@ -50,7 +64,7 @@ namespace slc {
          */
         virtual size_t read(uint8_t buffer[], size_t length) = 0;
 
-        virtual ~CharacterDevice() = 0;
+        virtual ~CharacterDevice() = default;
     };
 
 }
