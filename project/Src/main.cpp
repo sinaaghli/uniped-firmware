@@ -55,6 +55,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <cstdio>
+#include <memory>
 #include "usbd_cdc_if.h"
 #include "USBSerial.h"
 /* USER CODE END Includes */
@@ -133,8 +134,8 @@ int main(void)
     int count = 0;
     char inbuf[BUFFER_LENGTH];
     char outbuf[BUFFER_LENGTH];
-    slc::USBSerial usb(&hUsbDeviceFS);
-    usb.register_it();
+    auto usb = std::make_unique<slc::USBSerial>(&hUsbDeviceFS);
+    usb->register_it();
 
     /* USER CODE END 2 */
 
@@ -148,13 +149,13 @@ int main(void)
 
         // Write to USB serial.
         sprintf(outbuf, "[%d] This is a test of the USBSerial class.\n", count);
-        while (!usb.write_ready());
-        usb.write((unsigned char *) outbuf, strlen(outbuf));
+        while (!usb->write_ready());
+        usb->write((unsigned char *) outbuf, strlen(outbuf));
 
         // Read from USB serial.
-        if (usb.read_ready())
+        if (usb->read_ready())
         {
-            auto read = usb.read((unsigned char *) inbuf, BUFFER_LENGTH);
+            auto read = usb->read((unsigned char *) inbuf, BUFFER_LENGTH);
             if (read > 0)
             {
                 switch (inbuf[0])
