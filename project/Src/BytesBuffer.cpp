@@ -4,7 +4,10 @@
 
 #include <cstring>
 #include <algorithm>
+
+#include "IRQLock.h"
 #include <BytesBuffer.h>
+
 
 namespace slc {
 
@@ -33,9 +36,10 @@ namespace slc {
      */
     size_t BytesBuffer::write(const uint8_t *source, size_t count)
     {
+        IRQLock lock;
         size_t written = 0;
         size_t to_write = 0;
-        while ((count > 0) && !full())
+        while ((count > 0) && !full_())
         {
             if (tail_ == 0)
             {
@@ -66,9 +70,10 @@ namespace slc {
      */
     size_t BytesBuffer::read(uint8_t *dest, size_t count)
     {
+        IRQLock lock;
         size_t read = 0;
         size_t to_read = 0;
-        while ((count > 0) && !empty())
+        while ((count > 0) && !empty_())
         {
             if (head_ < tail_)
             {
@@ -92,8 +97,14 @@ namespace slc {
      */
     void BytesBuffer::reset()
     {
+        IRQLock lock;
         head_ = 0;
         tail_ = 0;
+    }
+
+    bool BytesBuffer::empty_() const
+    {
+        return head_ == tail_;
     }
 
     /** Determine if the buffer is empty.
@@ -103,7 +114,13 @@ namespace slc {
      */
     bool BytesBuffer::empty() const
     {
-        return head_ == tail_;
+        IRQLock lock;
+        return empty_();
+    }
+
+    bool BytesBuffer::full_() const
+    {
+        return (head_ + 1) % capacity_ == tail_;
     }
 
     /** Determine if the buffer is full.
@@ -113,7 +130,8 @@ namespace slc {
      */
     bool BytesBuffer::full() const
     {
-        return (head_ + 1) % capacity_ == tail_;
+        IRQLock lock;
+        return full_();
     }
 
     /** Get maximum capacity of the buffer.
@@ -122,6 +140,7 @@ namespace slc {
      */
     size_t BytesBuffer::capacity() const
     {
+        IRQLock lock;
         return capacity_;
     }
 
@@ -131,6 +150,7 @@ namespace slc {
      */
     size_t BytesBuffer::size() const
     {
+        IRQLock lock;
         if (head_ < tail_)
         {
             return capacity_ - tail_ + head_;

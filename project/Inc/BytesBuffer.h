@@ -12,6 +12,8 @@ namespace slc {
 
     /** Circular bytes buffer.
      *
+     * This class is interrupt safe because it uses the IRQLock class.
+     *
      */
     class BytesBuffer
     {
@@ -39,6 +41,10 @@ namespace slc {
         size_t tail_ = 0;
         const size_t capacity_;
         uint8_t *buffer_;
+
+        bool empty_() const;
+
+        bool full_() const;
     };
 
 }
