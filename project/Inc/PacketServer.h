@@ -39,8 +39,9 @@ namespace slc {
         void register_handler(
                 uint8_t type, std::function<void(void *, size_t)> handler);
 
-        bool receive_packet(bool blocking = false);
+        bool receive_ready();
 
+        bool receive_packet(bool blocking = false);
 
     private:
         static const size_t ALIGNMENT_ = 4;

@@ -58,6 +58,7 @@
 #include <memory>
 #include "usbd_cdc_if.h"
 #include "USBSerial.h"
+#include "PacketServer.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -77,6 +78,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 CRC_HandleTypeDef hcrc;
+uint8_t led_state = 0x00;
 
 /* USER CODE BEGIN PV */
 
@@ -95,6 +97,10 @@ static void MX_CRC_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+void handler8(void *packet, size_t size)
+{
+    led_state = *static_cast<uint8_t *>(packet);
+}
 /* USER CODE END 0 */
 
 /**
@@ -130,12 +136,15 @@ int main(void)
     /* USER CODE BEGIN 2 */
 
 #define BUFFER_LENGTH 512
-    int delay = 20;
-    int count = 0;
-    char inbuf[BUFFER_LENGTH];
-    char outbuf[BUFFER_LENGTH];
+#define MAGIC_BYTE 123
+
+    int delay = 50;
+    uint32_t systic = 0;
     auto usb = std::make_unique<slc::USBSerial>(&hUsbDeviceFS);
     usb->register_it();
+    auto server = std::make_unique<slc::PacketServer>(
+            std::move(usb), hcrc, MAGIC_BYTE, BUFFER_LENGTH);
+    server->register_handler(8, handler8);
 
     /* USER CODE END 2 */
 
@@ -147,55 +156,27 @@ int main(void)
 
         /* USER CODE BEGIN 3 */
 
-        // Write to USB serial.
-        sprintf(outbuf, "[%d] This is a test of the USBSerial class.\n", count);
-        while (!usb->write_ready());
-        usb->write((unsigned char *) outbuf, strlen(outbuf));
+        systic = HAL_GetTick();
 
-        // Read from USB serial.
-        if (usb->read_ready())
+        // Write packets to USB serial.
+        memcpy(server->init_packet(10, sizeof(systic)), &systic, sizeof(systic));
+        server->send_packet();
+
+        // Handle recieved packets.
+        if (server->receive_ready())
         {
-            auto read = usb->read((unsigned char *) inbuf, BUFFER_LENGTH);
-            if (read > 0)
-            {
-                switch (inbuf[0])
-                {
-                    case 'a':
-                        HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
-                        HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
-                        HAL_GPIO_WritePin(LD5_GPIO_Port, LD5_Pin, GPIO_PIN_RESET);
-                        HAL_GPIO_WritePin(LD6_GPIO_Port, LD6_Pin, GPIO_PIN_RESET);
-                        break;
-                    case 'w':
-                        HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
-                        HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
-                        HAL_GPIO_WritePin(LD5_GPIO_Port, LD5_Pin, GPIO_PIN_SET);
-                        HAL_GPIO_WritePin(LD6_GPIO_Port, LD6_Pin, GPIO_PIN_RESET);
-                        break;
-                    case 's':
-                        HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
-                        HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
-                        HAL_GPIO_WritePin(LD5_GPIO_Port, LD5_Pin, GPIO_PIN_RESET);
-                        HAL_GPIO_WritePin(LD6_GPIO_Port, LD6_Pin, GPIO_PIN_RESET);
-                        break;
-                    case 'd':
-                        HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
-                        HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
-                        HAL_GPIO_WritePin(LD5_GPIO_Port, LD5_Pin, GPIO_PIN_RESET);
-                        HAL_GPIO_WritePin(LD6_GPIO_Port, LD6_Pin, GPIO_PIN_SET);
-                        break;
-                    case 'q':
-                        HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
-                        HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
-                        HAL_GPIO_WritePin(LD5_GPIO_Port, LD5_Pin, GPIO_PIN_RESET);
-                        HAL_GPIO_WritePin(LD6_GPIO_Port, LD6_Pin, GPIO_PIN_RESET);
-                        break;
-                    default:
-                        break;
-                }
-            }
+            server->receive_packet();
         }
-        count++;
+
+        // Update LED state.
+        HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,
+                          (led_state & 1) ? GPIO_PIN_SET : GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin,
+                          (led_state & 2) ? GPIO_PIN_SET : GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(LD5_GPIO_Port, LD5_Pin,
+                          (led_state & 4) ? GPIO_PIN_SET : GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(LD6_GPIO_Port, LD6_Pin,
+                          (led_state & 8) ? GPIO_PIN_SET : GPIO_PIN_RESET);
         HAL_Delay(delay);
     }
     /* USER CODE END 3 */

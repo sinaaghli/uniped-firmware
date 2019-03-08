@@ -7,6 +7,8 @@
 #include <memory>
 #include <utility>
 #include <stm32f4xx_hal.h>
+#include <PacketServer.h>
+
 #include "PacketServer.h"
 
 namespace slc {
@@ -74,7 +76,7 @@ namespace slc {
 
         // append checksum
         uint32_t checksum = compute_checksum_(
-                tx_packet_, HEADER_SIZE_ + tx_packet_size_ + padding);
+                tx_packet_, (HEADER_SIZE_ + tx_packet_size_ + padding) / 4);
         memcpy(&tx_packet_[HEADER_SIZE_ + tx_packet_size_],
                &checksum, sizeof(checksum));
 
@@ -111,6 +113,16 @@ namespace slc {
         {
             result.first->second = handler;
         }
+    }
+
+    /** Determine if there are bytes available for the server to read.
+     *
+     * @retval true: bytes are available
+     * @retval false: no bytes are available
+     */
+    bool PacketServer::receive_ready()
+    {
+        return device_->read_ready();
     }
 
     /** Receive a packet.
@@ -193,8 +205,12 @@ namespace slc {
         // search for magic byte
         if (received_bytes_ == 0)
         {
-            if ((device_->read(&rx_packet_[0], 1) == 0) ||
-                (rx_packet_[0] != magic_byte_))
+            size_t bytes_read = 0;
+            do
+            {
+                bytes_read = device_->read(&rx_packet_[0], 1);
+            } while (bytes_read == 1 && rx_packet_[0] != magic_byte_);
+            if (rx_packet_[0] != magic_byte_)
             {
                 return false;
             }
@@ -210,6 +226,13 @@ namespace slc {
             }
             memcpy(&rx_packet_size_, &rx_packet_[HEADER_SIZE_ - 2],
                    sizeof(rx_packet_size_));
+        }
+
+        // if packet length is invalid reset
+        if (rx_packet_size_ > max_packet_size)
+        {
+            received_bytes_ = 0;
+            return false;
         }
 
         // retrieve the remainder of the packet
@@ -239,8 +262,8 @@ namespace slc {
         auto size = HEADER_SIZE_ + rx_packet_size_ + padding_(rx_packet_size_);
         uint32_t checksum;
         memcpy(&checksum, &rx_packet_[size], CHECKSUM_SIZE_);
-        uint32_t computed_checksum = compute_checksum_(rx_packet_, size);
-        return checksum != computed_checksum;
+        uint32_t computed_checksum = compute_checksum_(rx_packet_, size / 4);
+        return checksum == computed_checksum;
     }
 
     /** Call the handler for the received packet.
@@ -296,7 +319,7 @@ namespace slc {
     /** Compute the CRC 32 checksum of the given buffer.
      *
      * @param buffer the buffer to compute the checksum for
-     * @param length the length of the @p buffer, must be multiple of 4 bytes
+     * @param length the length of the @p buffer in 4 byte chunks
      * @return 32 bit checksum of the given @p buffer
      */
     uint32_t PacketServer::compute_checksum_(void *buffer, size_t length)
@@ -313,7 +336,7 @@ namespace slc {
      */
     size_t PacketServer::padding_(size_t length)
     {
-        return ALIGNMENT_ * ((length + 1 - ALIGNMENT_) / ALIGNMENT_) - length;
+        return ALIGNMENT_ * ((length + ALIGNMENT_ - 1) / ALIGNMENT_) - length;
     }
 
 }
