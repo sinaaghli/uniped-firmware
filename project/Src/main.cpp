@@ -143,7 +143,7 @@ int main(void)
 #define MAGIC_BYTE 123
 
     int delay = 50;
-    uint32_t systic = 0;
+    uint32_t microseconds = 0;
     auto usb = std::make_unique<slc::USBSerial>(&hUsbDeviceFS);
     usb->register_it();
     auto server = std::make_unique<slc::PacketServer>(
@@ -160,10 +160,11 @@ int main(void)
 
         /* USER CODE BEGIN 3 */
 
-        systic = HAL_GetTick();
+        microseconds = __HAL_TIM_GetCounter(&htim5);
 
         // Write packets to USB serial.
-        memcpy(server->init_packet(10, sizeof(systic)), &systic, sizeof(systic));
+        memcpy(server->init_packet(10, sizeof(microseconds)),
+               &microseconds, sizeof(microseconds));
         server->send_packet();
 
         // Handle recieved packets.
@@ -263,7 +264,6 @@ static void MX_TIM5_Init(void)
 {
 
     /* USER CODE BEGIN TIM5_Init 0 */
-
     /* USER CODE END TIM5_Init 0 */
 
     TIM_ClockConfigTypeDef sClockSourceConfig = {0};
@@ -273,9 +273,9 @@ static void MX_TIM5_Init(void)
 
     /* USER CODE END TIM5_Init 1 */
     htim5.Instance = TIM5;
-    htim5.Init.Prescaler = 72;
+    htim5.Init.Prescaler = 72 - 1;
     htim5.Init.CounterMode = TIM_COUNTERMODE_UP;
-    htim5.Init.Period = 0;
+    htim5.Init.Period = 0xFFFFFFFF;
     htim5.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
     if (HAL_TIM_Base_Init(&htim5) != HAL_OK)
     {
@@ -286,10 +286,6 @@ static void MX_TIM5_Init(void)
     {
         Error_Handler();
     }
-    if (HAL_TIM_OnePulse_Init(&htim5, TIM_OPMODE_SINGLE) != HAL_OK)
-    {
-        Error_Handler();
-    }
     sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
     sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
     if (HAL_TIMEx_MasterConfigSynchronization(&htim5, &sMasterConfig) != HAL_OK)
@@ -297,7 +293,7 @@ static void MX_TIM5_Init(void)
         Error_Handler();
     }
     /* USER CODE BEGIN TIM5_Init 2 */
-
+    HAL_TIM_Base_Start(&htim5);
     /* USER CODE END TIM5_Init 2 */
 
 }
