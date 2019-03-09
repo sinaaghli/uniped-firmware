@@ -50,18 +50,30 @@ class LEDController(QWidget):
         led_box.addWidget(green_button)
         led_box.addWidget(blue_button)
 
-        systic_title = QLabel('Systic:', self)
-        self.systic_value = QLineEdit(self)
-        self.systic_value.setReadOnly(True)
-        self.systic_value.setText('0')
+        msec_title = QLabel('Milliseconds:', self)
+        msec_title.setMinimumWidth(100)
+        self.msec_value = QLineEdit(self)
+        self.msec_value.setReadOnly(True)
+        self.msec_value.setText('0')
 
-        systic_box = QHBoxLayout()
-        systic_box.addWidget(systic_title)
-        systic_box.addWidget(self.systic_value)
+        msec_box = QHBoxLayout()
+        msec_box.addWidget(msec_title)
+        msec_box.addWidget(self.msec_value)
+
+        usec_title = QLabel('Microseconds:', self)
+        usec_title.setMinimumWidth(100)
+        self.usec_value = QLineEdit(self)
+        self.usec_value.setReadOnly(True)
+        self.usec_value.setText('0')
+
+        usec_box = QHBoxLayout()
+        usec_box.addWidget(usec_title)
+        usec_box.addWidget(self.usec_value)
 
         vbox = QVBoxLayout()
         vbox.addLayout(led_box)
-        vbox.addLayout(systic_box)
+        vbox.addLayout(msec_box)
+        vbox.addLayout(usec_box)
 
         self.setLayout(vbox)
         self.show()
@@ -96,13 +108,14 @@ class LEDController(QWidget):
     def timerEvent(self, event):
         if event.timerId() == self._timer.timerId():
             data = self._serial.read_all()
-            if data.startswith(b'\x7b\x0a\x04\x00'):
+            if data.startswith(b'\x7b\x0a\x08\x00'):
                 if self._log:
                     print('receiving: ' + ' '.join([f'{x:02x}' for x in data]))
-                magic, ptype, length, systic, checksum = struct.unpack(
-                    '< B B H L L', data[:12])
-                if checksum == stm32_crc(data[:8]):
-                    self.systic_value.setText(f'{systic}')
+                magic, ptype, length, msec, usec, checksum = struct.unpack(
+                    '< B B H L L L', data[:16])
+                if checksum == stm32_crc(data[:12]):
+                    self.msec_value.setText(f'{msec}')
+                    self.usec_value.setText(f'{usec}')
 
 
 if __name__ == '__main__':

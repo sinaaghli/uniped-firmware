@@ -55,6 +55,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <cstdio>
+#include <chrono>
 #include <memory>
 #include "usbd_cdc_if.h"
 #include "USBSerial.h"
@@ -104,6 +105,11 @@ void handler8(void *packet, size_t size)
 {
     led_state = *static_cast<uint8_t *>(packet);
 }
+
+typedef struct __attribute__((packed)) {
+    uint32_t msec;
+    uint32_t usec;
+} SystemStatus;
 /* USER CODE END 0 */
 
 /**
@@ -143,12 +149,19 @@ int main(void)
 #define MAGIC_BYTE 123
 
     int delay = 50;
-    uint32_t microseconds = 0;
+
+    SystemStatus system_status { .msec = 0, .usec = 0};
+
+    auto boot_time_msec = std::chrono::steady_clock::now();
+    auto boot_time_usec = std::chrono::high_resolution_clock::now();
+
+    // Setup communications.
     auto usb = std::make_unique<slc::USBSerial>(&hUsbDeviceFS);
     usb->register_it();
     auto server = std::make_unique<slc::PacketServer>(
             std::move(usb), hcrc, MAGIC_BYTE, BUFFER_LENGTH);
     server->register_handler(8, handler8);
+
 
     /* USER CODE END 2 */
 
@@ -160,14 +173,18 @@ int main(void)
 
         /* USER CODE BEGIN 3 */
 
-        microseconds = __HAL_TIM_GetCounter(&htim5);
+        // Update system status.
+        system_status.msec = (uint32_t)std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::steady_clock::now() - boot_time_msec).count();
+        system_status.usec = (uint32_t)std::chrono::duration_cast<std::chrono::microseconds>(
+                std::chrono::high_resolution_clock::now() - boot_time_usec).count();
 
         // Write packets to USB serial.
-        memcpy(server->init_packet(10, sizeof(microseconds)),
-               &microseconds, sizeof(microseconds));
+        memcpy(server->init_packet(10, sizeof(system_status)),
+               &system_status, sizeof(system_status));
         server->send_packet();
 
-        // Handle recieved packets.
+        // Handle received packets.
         if (server->receive_ready())
         {
             server->receive_packet();
