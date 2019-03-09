@@ -78,10 +78,11 @@
 
 /* Private variables ---------------------------------------------------------*/
 CRC_HandleTypeDef hcrc;
-uint8_t led_state = 0x00;
+
+TIM_HandleTypeDef htim5;
 
 /* USER CODE BEGIN PV */
-
+uint8_t led_state = 0x00;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -90,6 +91,8 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 
 static void MX_CRC_Init(void);
+
+static void MX_TIM5_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -133,6 +136,7 @@ int main(void)
     MX_GPIO_Init();
     MX_USB_DEVICE_Init();
     MX_CRC_Init();
+    MX_TIM5_Init();
     /* USER CODE BEGIN 2 */
 
 #define BUFFER_LENGTH 512
@@ -247,6 +251,54 @@ static void MX_CRC_Init(void)
     /* USER CODE BEGIN CRC_Init 2 */
 
     /* USER CODE END CRC_Init 2 */
+
+}
+
+/**
+  * @brief TIM5 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM5_Init(void)
+{
+
+    /* USER CODE BEGIN TIM5_Init 0 */
+
+    /* USER CODE END TIM5_Init 0 */
+
+    TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+    TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+    /* USER CODE BEGIN TIM5_Init 1 */
+
+    /* USER CODE END TIM5_Init 1 */
+    htim5.Instance = TIM5;
+    htim5.Init.Prescaler = 72;
+    htim5.Init.CounterMode = TIM_COUNTERMODE_UP;
+    htim5.Init.Period = 0;
+    htim5.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+    if (HAL_TIM_Base_Init(&htim5) != HAL_OK)
+    {
+        Error_Handler();
+    }
+    sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+    if (HAL_TIM_ConfigClockSource(&htim5, &sClockSourceConfig) != HAL_OK)
+    {
+        Error_Handler();
+    }
+    if (HAL_TIM_OnePulse_Init(&htim5, TIM_OPMODE_SINGLE) != HAL_OK)
+    {
+        Error_Handler();
+    }
+    sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+    sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+    if (HAL_TIMEx_MasterConfigSynchronization(&htim5, &sMasterConfig) != HAL_OK)
+    {
+        Error_Handler();
+    }
+    /* USER CODE BEGIN TIM5_Init 2 */
+
+    /* USER CODE END TIM5_Init 2 */
 
 }
 
