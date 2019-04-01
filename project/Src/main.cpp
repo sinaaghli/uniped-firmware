@@ -80,6 +80,8 @@
 /* Private variables ---------------------------------------------------------*/
 CRC_HandleTypeDef hcrc;
 
+SPI_HandleTypeDef hspi2;
+
 TIM_HandleTypeDef htim5;
 
 /* USER CODE BEGIN PV */
@@ -92,6 +94,8 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 
 static void MX_CRC_Init(void);
+
+static void MX_SPI2_Init(void);
 
 static void MX_TIM5_Init(void);
 /* USER CODE BEGIN PFP */
@@ -106,7 +110,8 @@ void handler8(void *packet, size_t size)
     led_state = *static_cast<uint8_t *>(packet);
 }
 
-typedef struct __attribute__((packed)) {
+typedef struct __attribute__((packed))
+{
     uint32_t msec;
     uint32_t usec;
 } SystemStatus;
@@ -143,6 +148,7 @@ int main(void)
     MX_USB_DEVICE_Init();
     MX_CRC_Init();
     MX_TIM5_Init();
+    MX_SPI2_Init();
     /* USER CODE BEGIN 2 */
 
 #define BUFFER_LENGTH 512
@@ -150,7 +156,7 @@ int main(void)
 
     int delay = 50;
 
-    SystemStatus system_status { .msec = 0, .usec = 0};
+    SystemStatus system_status{.msec = 0, .usec = 0};
 
     auto boot_time_msec = std::chrono::steady_clock::now();
     auto boot_time_usec = std::chrono::high_resolution_clock::now();
@@ -174,9 +180,9 @@ int main(void)
         /* USER CODE BEGIN 3 */
 
         // Update system status.
-        system_status.msec = (uint32_t)std::chrono::duration_cast<std::chrono::milliseconds>(
+        system_status.msec = (uint32_t) std::chrono::duration_cast<std::chrono::milliseconds>(
                 std::chrono::steady_clock::now() - boot_time_msec).count();
-        system_status.usec = (uint32_t)std::chrono::duration_cast<std::chrono::microseconds>(
+        system_status.usec = (uint32_t) std::chrono::duration_cast<std::chrono::microseconds>(
                 std::chrono::high_resolution_clock::now() - boot_time_usec).count();
 
         // Write packets to USB serial.
@@ -271,6 +277,46 @@ static void MX_CRC_Init(void)
     /* USER CODE END CRC_Init 2 */
 
 }
+
+
+/**
+  * @brief SPI2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_SPI2_Init(void)
+{
+
+    /* USER CODE BEGIN SPI2_Init 0 */
+
+    /* USER CODE END SPI2_Init 0 */
+
+    /* USER CODE BEGIN SPI2_Init 1 */
+
+    /* USER CODE END SPI2_Init 1 */
+    /* SPI2 parameter configuration*/
+    hspi2.Instance = SPI2;
+    hspi2.Init.Mode = SPI_MODE_MASTER;
+    hspi2.Init.Direction = SPI_DIRECTION_2LINES_RXONLY;
+    hspi2.Init.DataSize = SPI_DATASIZE_8BIT;
+    hspi2.Init.CLKPolarity = SPI_POLARITY_HIGH;
+    hspi2.Init.CLKPhase = SPI_PHASE_2EDGE;
+    hspi2.Init.NSS = SPI_NSS_SOFT;
+    hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
+    hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
+    hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
+    hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+    hspi2.Init.CRCPolynomial = 10;
+    if (HAL_SPI_Init(&hspi2) != HAL_OK)
+    {
+        Error_Handler();
+    }
+    /* USER CODE BEGIN SPI2_Init 2 */
+
+    /* USER CODE END SPI2_Init 2 */
+
+}
+
 
 /**
   * @brief TIM5 Initialization Function
