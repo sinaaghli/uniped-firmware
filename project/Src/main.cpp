@@ -114,8 +114,24 @@ typedef struct __attribute__((packed))
 {
     uint32_t msec;
     uint32_t usec;
-    uint8_t buf[4];
+    uint16_t angle;
+    uint8_t offset_compensation_finished;
+    uint8_t cordic_overflow;
+    uint8_t linearity_alarm;
+    uint8_t magnitude_increase;
+    uint8_t magnitude_decrease;
 } SystemStatus;
+
+
+uint8_t offset_byte(uint8_t *buffer, size_t bit_offset)
+{
+    size_t byte_offset = bit_offset / 8;
+    bit_offset = bit_offset % 8;
+    return (buffer[byte_offset] << bit_offset) |
+           (buffer[byte_offset + 1] >> (8 - bit_offset));
+}
+
+
 /* USER CODE END 0 */
 
 /**
@@ -173,6 +189,8 @@ int main(void)
     server->register_handler(8, handler8);
 
 
+    uint8_t buf[4];
+
     /* USER CODE END 2 */
 
     /* Infinite loop */
@@ -199,10 +217,24 @@ int main(void)
         {
             server->receive_packet();
         }
+
+
         HAL_GPIO_WritePin(NSS2_GPIO_Port, NSS2_Pin, GPIO_PIN_RESET);
-        HAL_SPI_Receive(&hspi2, system_status.buf, 4, 10000);
-//        HAL_SPI_Transmit(&spi, (uint8_t *)message, strlen(message), HAL_MAX_DELAY);
+        HAL_SPI_Receive(&hspi2, buf, 4, 10000);
         HAL_GPIO_WritePin(NSS2_GPIO_Port, NSS2_Pin, GPIO_PIN_SET);
+
+
+//        system_status.angle = ((uint16_t) buf[1]) & 0x0F;
+//        system_status.angle = (((uint16_t) buf[0]) << 4) & 0x0FF0;
+//        system_status.angle = 0;
+//        system_status.angle = buf[0];
+        system_status.angle = (((uint16_t)offset_byte(buf, 1)) << 4) | (offset_byte(buf, 1+4) & 0xFF);
+        uint8_t flags = offset_byte(buf, 11) & 0x3F;
+        system_status.offset_compensation_finished = flags & 0x20;
+        system_status.cordic_overflow = flags & 0x10;
+        system_status.linearity_alarm = flags & 0x8;
+        system_status.magnitude_increase = flags & 0x4;
+        system_status.magnitude_decrease = flags & 0x2;
 
         // Update LED state.
         HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,
