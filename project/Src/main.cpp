@@ -132,6 +132,23 @@ uint8_t offset_byte(uint8_t *buffer, size_t bit_offset)
 }
 
 
+/**
+  * @brief Rx Transfer completed callback.
+  * @param  hspi pointer to a SPI_HandleTypeDef structure that contains
+  *               the configuration information for SPI module.
+  * @retval None
+  */
+void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi)
+{
+    /* Prevent unused argument(s) compilation warning */
+    UNUSED(hspi);
+    HAL_GPIO_WritePin(NSS2_GPIO_Port, NSS2_Pin, GPIO_PIN_SET);
+    /* NOTE : This function should not be modified, when the callback is needed,
+              the HAL_SPI_RxCpltCallback should be implemented in the user file
+    */
+}
+
+
 /* USER CODE END 0 */
 
 /**
@@ -218,16 +235,6 @@ int main(void)
             server->receive_packet();
         }
 
-
-        HAL_GPIO_WritePin(NSS2_GPIO_Port, NSS2_Pin, GPIO_PIN_RESET);
-        HAL_SPI_Receive(&hspi2, buf, 4, 10000);
-        HAL_GPIO_WritePin(NSS2_GPIO_Port, NSS2_Pin, GPIO_PIN_SET);
-
-
-//        system_status.angle = ((uint16_t) buf[1]) & 0x0F;
-//        system_status.angle = (((uint16_t) buf[0]) << 4) & 0x0FF0;
-//        system_status.angle = 0;
-//        system_status.angle = buf[0];
         system_status.angle = (((uint16_t)offset_byte(buf, 1)) << 4) | (offset_byte(buf, 1+4) & 0xFF);
         uint8_t flags = offset_byte(buf, 11) & 0x3F;
         system_status.offset_compensation_finished = flags & 0x20;
@@ -235,6 +242,8 @@ int main(void)
         system_status.linearity_alarm = flags & 0x8;
         system_status.magnitude_increase = flags & 0x4;
         system_status.magnitude_decrease = flags & 0x2;
+        HAL_GPIO_WritePin(NSS2_GPIO_Port, NSS2_Pin, GPIO_PIN_RESET);
+        HAL_SPI_Receive_IT(&hspi2, buf, 4);
 
         // Update LED state.
         HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,
