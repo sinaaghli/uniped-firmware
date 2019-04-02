@@ -114,6 +114,7 @@ typedef struct __attribute__((packed))
 {
     uint32_t msec;
     uint32_t usec;
+    uint8_t buf[4];
 } SystemStatus;
 /* USER CODE END 0 */
 
@@ -151,6 +152,8 @@ int main(void)
     MX_SPI2_Init();
     /* USER CODE BEGIN 2 */
 
+    HAL_GPIO_WritePin(NSS2_GPIO_Port, NSS2_Pin, GPIO_PIN_SET);
+
 #define BUFFER_LENGTH 512
 #define MAGIC_BYTE 123
 
@@ -160,6 +163,7 @@ int main(void)
 
     auto boot_time_msec = std::chrono::steady_clock::now();
     auto boot_time_usec = std::chrono::high_resolution_clock::now();
+
 
     // Setup communications.
     auto usb = std::make_unique<slc::USBSerial>(&hUsbDeviceFS);
@@ -195,6 +199,10 @@ int main(void)
         {
             server->receive_packet();
         }
+        HAL_GPIO_WritePin(NSS2_GPIO_Port, NSS2_Pin, GPIO_PIN_RESET);
+        HAL_SPI_Receive(&hspi2, system_status.buf, 4, 10000);
+//        HAL_SPI_Transmit(&spi, (uint8_t *)message, strlen(message), HAL_MAX_DELAY);
+        HAL_GPIO_WritePin(NSS2_GPIO_Port, NSS2_Pin, GPIO_PIN_SET);
 
         // Update LED state.
         HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,
@@ -300,9 +308,9 @@ static void MX_SPI2_Init(void)
     hspi2.Init.Direction = SPI_DIRECTION_2LINES_RXONLY;
     hspi2.Init.DataSize = SPI_DATASIZE_8BIT;
     hspi2.Init.CLKPolarity = SPI_POLARITY_HIGH;
-    hspi2.Init.CLKPhase = SPI_PHASE_2EDGE;
+    hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
     hspi2.Init.NSS = SPI_NSS_SOFT;
-    hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
+    hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_256;
     hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
     hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
     hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
