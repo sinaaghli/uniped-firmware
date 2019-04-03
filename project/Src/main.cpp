@@ -60,6 +60,7 @@
 #include "usbd_cdc_if.h"
 #include "USBSerial.h"
 #include "PacketServer.h"
+#include "SerialPeripheralInterface.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -132,23 +133,6 @@ uint8_t offset_byte(uint8_t *buffer, size_t bit_offset)
 }
 
 
-/**
-  * @brief Rx Transfer completed callback.
-  * @param  hspi pointer to a SPI_HandleTypeDef structure that contains
-  *               the configuration information for SPI module.
-  * @retval None
-  */
-void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi)
-{
-    /* Prevent unused argument(s) compilation warning */
-    UNUSED(hspi);
-    HAL_GPIO_WritePin(NSS2_GPIO_Port, NSS2_Pin, GPIO_PIN_SET);
-    /* NOTE : This function should not be modified, when the callback is needed,
-              the HAL_SPI_RxCpltCallback should be implemented in the user file
-    */
-}
-
-
 /* USER CODE END 0 */
 
 /**
@@ -205,8 +189,9 @@ int main(void)
             std::move(usb), hcrc, MAGIC_BYTE, BUFFER_LENGTH);
     server->register_handler(8, handler8);
 
-
+    slc::SerialPeripheralInterface spi2(&hspi2, NSS2_GPIO_Port, NSS2_Pin);
     uint8_t buf[4];
+    bool complete = true;
 
     /* USER CODE END 2 */
 
@@ -242,8 +227,11 @@ int main(void)
         system_status.linearity_alarm = flags & 0x8;
         system_status.magnitude_increase = flags & 0x4;
         system_status.magnitude_decrease = flags & 0x2;
-        HAL_GPIO_WritePin(NSS2_GPIO_Port, NSS2_Pin, GPIO_PIN_RESET);
-        HAL_SPI_Receive_IT(&hspi2, buf, 4);
+
+        if (complete)
+        {
+            spi2.read(buf, 4, &complete);
+        }
 
         // Update LED state.
         HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,
