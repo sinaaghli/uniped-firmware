@@ -46,7 +46,7 @@ namespace slc {
 
     float AngularEncoder::resolution_radians() const
     {
-        return static_cast<float>(resolution_ * M_PI / 180.0);
+        return resolution_ * 3.14159265358979323846f / 180.0f;
     }
 
 }

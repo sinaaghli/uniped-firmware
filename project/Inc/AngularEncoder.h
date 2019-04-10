@@ -2,17 +2,18 @@
 // Created by Michael R. Shannon on 4/3/19.
 //
 
+#include "Status.h"
+#include "Sensor.h"
+
 #ifndef ANGULARENCODER_H
 #define ANGULARENCODER_H
 
+
 namespace slc {
 
-    class AngularEncoder
+    class AngularEncoder : virtual Sensor
     {
     public:
-        virtual void update(bool blocking = true) = 0;
-
-        virtual bool new_data() const = 0;
 
         virtual int raw_position() const = 0;
 
@@ -40,5 +41,6 @@ namespace slc {
     };
 
 }
+
 
 #endif //ANGULARENCODER_H
