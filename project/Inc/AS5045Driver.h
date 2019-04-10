@@ -14,10 +14,12 @@
 
 namespace slc {
 
-    class AS5045Backend : virtual Sensor
+    class AS5045Driver : virtual Sensor
     {
     public:
-        explicit AS5045Backend(
+        static const size_t bits_per_encoder = 19;
+        const size_t encoders;
+        explicit AS5045Driver(
                 SerialPeripheralInterface spi,
                 size_t encoders = 1);
 
@@ -33,7 +35,6 @@ namespace slc {
 
     private:
         SerialPeripheralInterface spi_;
-        const size_t num_encoders_;
         Status status_;
         mutable size_t sample_count_ = 0;
         mutable std::atomic_bool spi_read_complete_ = false;

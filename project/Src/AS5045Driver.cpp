@@ -5,24 +5,22 @@
 #include <cstdint>
 #include <memory>
 #include "Status.h"
-#include "AS5045Backend.h"
+#include "AS5045Driver.h"
 
-
-#define BITS_PER_ENCODER 19
 
 namespace slc {
 
-    AS5045Backend::AS5045Backend(
-            SerialPeripheralInterface spi, size_t encoders)
-            : spi_(std::move(spi)), num_encoders_(encoders),
+    AS5045Driver::AS5045Driver(
+            SerialPeripheralInterface spi, size_t encoders_)
+            : spi_(std::move(spi)), encoders(encoders_),
               status_(Status::idle),
-              buffer_length_((BITS_PER_ENCODER * encoders + 7) / 8),
+              buffer_length_((bits_per_encoder * encoders + 7) / 8),
               spi_buffer_(std::make_unique<uint8_t[]>(buffer_length_)),
               sample_buffer_(std::make_unique<uint8_t[]>(buffer_length_))
     {
     }
 
-    Status AS5045Backend::sample(bool blocking)
+    Status AS5045Driver::sample(bool blocking)
     {
         swap_if_complete_();
 
@@ -47,24 +45,24 @@ namespace slc {
         return status_;
     }
 
-    std::size_t AS5045Backend::sample_count() const
+    std::size_t AS5045Driver::sample_count() const
     {
         swap_if_complete_();
         return sample_count_;
     }
 
-    Status AS5045Backend::status() const
+    Status AS5045Driver::status() const
     {
         swap_if_complete_();
         return status_;
     }
 
-    bool AS5045Backend::busy() const
+    bool AS5045Driver::busy() const
     {
         return spi_.busy();
     }
 
-    uint8_t *AS5045Backend::buffer()
+    uint8_t *AS5045Driver::buffer()
     {
         swap_if_complete_();
 
@@ -76,13 +74,13 @@ namespace slc {
         return sample_buffer_.get();
     }
 
-    void AS5045Backend::swap_buffers_() const
+    void AS5045Driver::swap_buffers_() const
     {
         sample_buffer_.swap(spi_buffer_);
         ++sample_count_;
     }
 
-    void AS5045Backend::swap_if_complete_() const
+    void AS5045Driver::swap_if_complete_() const
     {
         bool complete = true;
         if (spi_read_complete_.compare_exchange_strong(complete, false))
