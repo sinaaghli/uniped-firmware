@@ -2,12 +2,14 @@
 // Created by Michael R. Shannon on 4/2/19.
 //
 
+#include <atomic>
 #include <cstdint>
 #include <functional>
 #include <map>
 #include <utility>
 #include "stm32f4xx_hal_def.h"
 #include "stm32f4xx_hal_spi.h"
+#include "Status.h"
 #include "SerialPeripheralInterface.h"
 
 
@@ -44,15 +46,15 @@ namespace slc {
         return previous;
     }
 
-    bool SerialPeripheralInterface::read(
-            void *buffer, size_t bytes, bool *complete_flag)
+    Status SerialPeripheralInterface::read(
+            void *buffer, size_t bytes, std::atomic_bool *complete_flag)
     {
         HAL_StatusTypeDef status = HAL_OK;
 
         // return error if busy
         if (!ready())
         {
-            return false;
+            return Status::failed;
         }
 
         // select chip
@@ -78,12 +80,27 @@ namespace slc {
                     static_cast<uint16_t>(bytes));
         }
 
-        return status == HAL_OK;
+        switch (status)
+        {
+            case HAL_OK:
+                if (complete_flag == nullptr)
+                {
+                    return Status::success;
+                }
+                return Status::working;
+            default:
+                return Status::failed;
+        }
     }
 
-    bool SerialPeripheralInterface::ready()
+    bool SerialPeripheralInterface::ready() const
     {
         return spi_->State == HAL_SPI_STATE_READY;
+    }
+
+    bool SerialPeripheralInterface::busy() const
+    {
+        return !ready();
     }
 
     void SerialPeripheralInterface::complete_read_()
@@ -92,7 +109,8 @@ namespace slc {
         HAL_GPIO_WritePin(chip_select_port_, chip_select_pin_, GPIO_PIN_SET);
         if (callback_.has_value())
         {
-            callback_.value()(buffer_, bytes_);
+            // buffer_ is no longer changing outside of context
+            callback_.value()(const_cast<void *>(buffer_), bytes_);
         }
     }
 
@@ -116,6 +134,6 @@ extern "C" void spi_rx_complete_it(SPI_HandleTypeDef *spi)
         return;
     }
 
-    *(spi_object->complete_flag_) = true;
+    spi_object->complete_flag_->store(true);
     spi_object->complete_read_();
 }

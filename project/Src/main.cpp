@@ -54,6 +54,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <atomic>
 #include <cstdio>
 #include <chrono>
 #include <memory>
@@ -191,7 +192,7 @@ int main(void)
 
     slc::SerialPeripheralInterface spi2(&hspi2, NSS2_GPIO_Port, NSS2_Pin);
     uint8_t buf[4];
-    bool complete = true;
+    std::atomic_bool complete = true;
 
     /* USER CODE END 2 */
 
@@ -230,7 +231,7 @@ int main(void)
 
         if (complete)
         {
-            spi2.read(buf, 4, &complete);
+            auto err = spi2.read(buf, 4, &complete);
         }
 
         // Update LED state.
