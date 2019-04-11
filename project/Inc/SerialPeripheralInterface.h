@@ -40,9 +40,11 @@ namespace slc {
 
         bool busy() const;
 
-        SerialPeripheralInterface(SerialPeripheralInterface &&) = default;
+        // because of automatic registration into interrupt handler SPI
+        // objects cannot be moved
+        SerialPeripheralInterface(SerialPeripheralInterface &&) = delete;
         SerialPeripheralInterface &operator=(
-                SerialPeripheralInterface &&) = default;
+                SerialPeripheralInterface &&) = delete;
 
     private:
         SPI_HandleTypeDef *spi_;
