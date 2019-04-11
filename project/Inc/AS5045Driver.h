@@ -5,20 +5,23 @@
 #include <atomic>
 #include <cstdint>
 #include <memory>
+#include <utility>
 #include "Status.h"
 #include "Sensor.h"
 #include "SerialPeripheralInterface.h"
 
-#ifndef AS5045BACKEND_H
-#define AS5045BACKEND_H
+#ifndef AS5045DRIVER_H
+#define AS5045DRIVER_H
+
 
 namespace slc {
 
-    class AS5045Driver : virtual Sensor
+    class AS5045Driver : public virtual Sensor
     {
     public:
         static const size_t bits_per_encoder = 19;
         const size_t encoders;
+
         explicit AS5045Driver(
                 SerialPeripheralInterface spi,
                 size_t encoders = 1);
@@ -31,7 +34,7 @@ namespace slc {
 
         bool busy() const override;
 
-        uint8_t *buffer();
+        std::pair<size_t, uint32_t> data(size_t encoder = 0);
 
     private:
         SerialPeripheralInterface spi_;
@@ -43,10 +46,12 @@ namespace slc {
         mutable std::unique_ptr<uint8_t[]> sample_buffer_;
 
         void swap_buffers_() const;
+
         void swap_if_complete_() const;
 
     };
 
 }
 
-#endif //AS5045BACKEND_H
+
+#endif //AS5045DRIVER_H

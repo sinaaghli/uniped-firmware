@@ -4,6 +4,9 @@
 
 #include <cstdint>
 #include <memory>
+#include <utility>
+#include <sstream>
+#include "tools.h"
 #include "Status.h"
 #include "AS5045Driver.h"
 
@@ -62,16 +65,29 @@ namespace slc {
         return spi_.busy();
     }
 
-    uint8_t *AS5045Driver::buffer()
+    std::pair<size_t, uint32_t> AS5045Driver::data(size_t encoder)
     {
-        swap_if_complete_();
-
-        if (sample_count_ == 0)
+        if (encoder >= encoders)
         {
-            return nullptr;
+            std::ostringstream message;
+            message << "'encoder' = " << encoder
+                    << " must be less than the number of encoders ("
+                    << encoders << ")";
+            throw std::out_of_range("");
         }
 
-        return sample_buffer_.get();
+        swap_if_complete_();
+
+        uint32_t data_ = 0;
+        size_t encoder_offset = encoder * AS5045Driver::bits_per_encoder;
+        data_ |= static_cast<uint32_t>(tools::offset_byte(
+                sample_buffer_.get(), 11 + encoder_offset));
+        data_ |= static_cast<uint32_t>(tools::offset_byte(
+                sample_buffer_.get(), 3 + encoder_offset)) << 8;
+        data_ |= (static_cast<uint32_t>(tools::offset_byte(
+                sample_buffer_.get(), 1 + encoder_offset)) & 0xC0) << 10;
+
+        return {sample_count_, data_};
     }
 
     void AS5045Driver::swap_buffers_() const
@@ -88,6 +104,5 @@ namespace slc {
             swap_buffers_();
         }
     }
-
 
 }
