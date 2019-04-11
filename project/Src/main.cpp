@@ -63,6 +63,8 @@
 #include "USBSerial.h"
 #include "PacketServer.h"
 #include "SerialPeripheralInterface.h"
+#include "AS5045Driver.h"
+#include "AS5045.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -117,12 +119,8 @@ typedef struct __attribute__((packed))
 {
     uint32_t msec;
     uint32_t usec;
-    uint16_t angle;
-    uint8_t offset_compensation_finished;
-    uint8_t cordic_overflow;
-    uint8_t linearity_alarm;
-    uint8_t magnitude_increase;
-    uint8_t magnitude_decrease;
+    size_t hip_angle_count;
+    float hip_angle;
 } SystemStatus;
 
 
@@ -174,7 +172,6 @@ int main(void)
     auto boot_time_msec = std::chrono::steady_clock::now();
     auto boot_time_usec = std::chrono::high_resolution_clock::now();
 
-
     // Setup communications.
     auto usb = std::make_unique<slc::USBSerial>(&hUsbDeviceFS);
     usb->register_it();
@@ -182,9 +179,13 @@ int main(void)
             std::move(usb), hcrc, MAGIC_BYTE, BUFFER_LENGTH);
     server->register_handler(8, handler8);
 
-    slc::SerialPeripheralInterface spi2(&hspi2, NSS2_GPIO_Port, NSS2_Pin);
-    uint8_t buf[4];
-    std::atomic_bool complete = true;
+    // Setup angular encoder.
+    auto angle_driver = std::make_shared<slc::AS5045Driver>(
+            std::make_unique<slc::SerialPeripheralInterface>(
+                    &hspi2, NSS2_GPIO_Port, NSS2_Pin));
+    slc::AS5045 hip(angle_driver, 0, false);
+    hip.sample(true);
+    hip.calibrate();  // initial angle is 0
 
     /* USER CODE END 2 */
 
@@ -213,18 +214,11 @@ int main(void)
             server->receive_packet();
         }
 
-        system_status.angle = (((uint16_t)slc::tools::offset_byte(buf, 1)) << 4) | (slc::tools::offset_byte(buf, 1+4) & 0xFF);
-        uint8_t flags = slc::tools::offset_byte(buf, 11) & 0x3F;
-        system_status.offset_compensation_finished = flags & 0x20;
-        system_status.cordic_overflow = flags & 0x10;
-        system_status.linearity_alarm = flags & 0x8;
-        system_status.magnitude_increase = flags & 0x4;
-        system_status.magnitude_decrease = flags & 0x2;
-
-        if (complete)
-        {
-            auto err = spi2.read(buf, 4, &complete);
-        }
+        // read hip angle
+        auto [count, angle] = hip.degrees();
+        system_status.hip_angle_count = count;
+        system_status.hip_angle = angle;
+        hip.sample(false);
 
         // Update LED state.
         HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,
