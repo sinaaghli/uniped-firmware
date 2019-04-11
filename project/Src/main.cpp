@@ -59,6 +59,7 @@
 #include <chrono>
 #include <memory>
 #include "usbd_cdc_if.h"
+#include "tools.h"
 #include "USBSerial.h"
 #include "PacketServer.h"
 #include "SerialPeripheralInterface.h"
@@ -123,15 +124,6 @@ typedef struct __attribute__((packed))
     uint8_t magnitude_increase;
     uint8_t magnitude_decrease;
 } SystemStatus;
-
-
-uint8_t offset_byte(uint8_t *buffer, size_t bit_offset)
-{
-    size_t byte_offset = bit_offset / 8;
-    bit_offset = bit_offset % 8;
-    return (buffer[byte_offset] << bit_offset) |
-           (buffer[byte_offset + 1] >> (8 - bit_offset));
-}
 
 
 /* USER CODE END 0 */
@@ -221,8 +213,8 @@ int main(void)
             server->receive_packet();
         }
 
-        system_status.angle = (((uint16_t)offset_byte(buf, 1)) << 4) | (offset_byte(buf, 1+4) & 0xFF);
-        uint8_t flags = offset_byte(buf, 11) & 0x3F;
+        system_status.angle = (((uint16_t)slc::tools::offset_byte(buf, 1)) << 4) | (slc::tools::offset_byte(buf, 1+4) & 0xFF);
+        uint8_t flags = slc::tools::offset_byte(buf, 11) & 0x3F;
         system_status.offset_compensation_finished = flags & 0x20;
         system_status.cordic_overflow = flags & 0x10;
         system_status.linearity_alarm = flags & 0x8;
