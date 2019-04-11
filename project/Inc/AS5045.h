@@ -23,8 +23,8 @@ namespace slc {
 
     public:
 
-        explicit AS5045(std::shared_ptr<AS5045Driver> driver,
-                        size_t index = 0, int zero_offset = 0);
+        explicit AS5045(std::shared_ptr<AS5045Driver> driver, size_t index = 0,
+                        bool reversed = false, int zero_offset = 0);
 
         std::shared_ptr<AS5045Driver> driver();
 
@@ -39,7 +39,7 @@ namespace slc {
         std::pair<size_t, int> raw_position() const override;
 
     private:
-        static constexpr float resolution = 360.0f/4096.0f;
+        static constexpr unsigned int positions_per_revolution = 4096;
         mutable Status status_ = Status::idle;
         mutable size_t sample_count_ = 0;
         mutable int raw_position_ = 0;
