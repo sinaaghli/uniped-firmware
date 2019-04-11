@@ -14,20 +14,24 @@
 namespace slc {
 
     AS5045Driver::AS5045Driver(
-            SerialPeripheralInterface spi, size_t encoders_)
+            std::unique_ptr<SerialPeripheralInterface> spi, size_t encoders_)
             : spi_(std::move(spi)), encoders(encoders_),
               status_(Status::idle),
               buffer_length_((bits_per_encoder * encoders + 7) / 8),
               spi_buffer_(std::make_unique<uint8_t[]>(buffer_length_)),
               sample_buffer_(std::make_unique<uint8_t[]>(buffer_length_))
     {
+        if (!spi_)
+        {
+            throw std::invalid_argument("'spi' cannot be null");
+        }
     }
 
     Status AS5045Driver::sample(bool blocking)
     {
         swap_if_complete_();
 
-        if (!spi_.ready())
+        if (!spi_->ready())
         {
             return Status::failed;
         }
@@ -36,7 +40,7 @@ namespace slc {
 
         if (blocking)
         {
-            status_ = spi_.read(spi_buffer_.get(), buffer_length_);
+            status_ = spi_->read(spi_buffer_.get(), buffer_length_);
             if (status_ == Status::success)
             {
                 swap_buffers_();
@@ -44,7 +48,7 @@ namespace slc {
             return status_;
         }
 
-        status_ = spi_.read(spi_buffer_.get(), buffer_length_, &spi_read_complete_);
+        status_ = spi_->read(spi_buffer_.get(), buffer_length_, &spi_read_complete_);
         return status_;
     }
 
@@ -62,7 +66,7 @@ namespace slc {
 
     bool AS5045Driver::busy() const
     {
-        return spi_.busy();
+        return spi_->busy();
     }
 
     std::pair<size_t, uint32_t> AS5045Driver::data(size_t encoder)
@@ -83,9 +87,9 @@ namespace slc {
         data_ |= static_cast<uint32_t>(tools::offset_byte(
                 sample_buffer_.get(), 11 + encoder_offset));
         data_ |= static_cast<uint32_t>(tools::offset_byte(
-                sample_buffer_.get(), 3 + encoder_offset)) << 8;
+                sample_buffer_.get(), 3 + encoder_offset)) << 8U;
         data_ |= (static_cast<uint32_t>(tools::offset_byte(
-                sample_buffer_.get(), 1 + encoder_offset)) & 0xC0) << 10;
+                sample_buffer_.get(), 1 + encoder_offset)) & 0xC0U) << 10U;
 
         return {sample_count_, data_};
     }

@@ -23,7 +23,7 @@ namespace slc {
         const size_t encoders;
 
         explicit AS5045Driver(
-                SerialPeripheralInterface spi,
+                std::unique_ptr<SerialPeripheralInterface> spi,
                 size_t encoders = 1);
 
         Status sample(bool blocking) override;
@@ -37,7 +37,7 @@ namespace slc {
         std::pair<size_t, uint32_t> data(size_t encoder = 0);
 
     private:
-        SerialPeripheralInterface spi_;
+        std::unique_ptr<SerialPeripheralInterface> spi_;
         Status status_;
         mutable size_t sample_count_ = 0;
         mutable std::atomic_bool spi_read_complete_ = false;
