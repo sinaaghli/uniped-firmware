@@ -3,15 +3,18 @@
 //
 
 #include <cmath>
+#include "tools.h"
 #include "AngularEncoder.h"
 
 
 namespace slc {
 
-    AngularEncoder::AngularEncoder(float resolution, int zero_offset)
+    AngularEncoder::AngularEncoder(
+            unsigned int positions_per_revolution,
+            bool reversed, int zero_offset)
+            : positions_per_revolution_(positions_per_revolution),
+            reversed_(reversed), zero_offset_(zero_offset)
     {
-        resolution_ = resolution;
-        zero_offset_ = zero_offset;
     }
 
     void AngularEncoder::calibrate(int position)
@@ -19,15 +22,26 @@ namespace slc {
         zero_offset_ = raw_position().second - position;
     }
 
-    std::pair<size_t, int> AngularEncoder::position() const
-    {
-        auto [count, raw_pos] = raw_position();
-        return {count, raw_pos - zero_offset_};
-    }
-
     int AngularEncoder::zero_offset() const
     {
         return zero_offset_;
+    }
+
+    std::pair<size_t, int> AngularEncoder::position() const
+    {
+        auto [count, raw_pos] = raw_position();
+        auto pos = raw_pos - zero_offset_;
+        if (reversed_)
+        {
+            pos = positions_per_revolution_ - pos;
+        }
+        pos = tools::pmod(pos, static_cast<int>(positions_per_revolution_));
+        return {count, pos};
+    }
+
+    unsigned int AngularEncoder::postions_per_revolution() const
+    {
+        return positions_per_revolution_;
     }
 
     std::pair<size_t, float> AngularEncoder::degrees() const
@@ -38,7 +52,7 @@ namespace slc {
 
     float AngularEncoder::resolution_degrees() const
     {
-        return resolution_;
+        return 360.0f/positions_per_revolution_;
     }
 
     std::pair<size_t, float> AngularEncoder::radians() const
@@ -49,7 +63,7 @@ namespace slc {
 
     float AngularEncoder::resolution_radians() const
     {
-        return resolution_ * 3.14159265358979323846f / 180.0f;
+        return (2.0f * 3.14159265358979323846f) / positions_per_revolution_;
     }
 
 }

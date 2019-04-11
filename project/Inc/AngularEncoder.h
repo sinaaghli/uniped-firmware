@@ -21,9 +21,11 @@ namespace slc {
 
         void calibrate(int position = 0);
 
+        int zero_offset() const;
+
         std::pair<size_t, int> position() const;
 
-        int zero_offset() const;
+        unsigned int postions_per_revolution() const;
 
         std::pair<size_t, float> degrees() const;
 
@@ -34,10 +36,13 @@ namespace slc {
         float resolution_radians() const;
 
     protected:
-        explicit AngularEncoder(float resolution, int zero_offset = 0);
+        explicit AngularEncoder(
+                unsigned int positions_per_revolution,
+                bool reversed = false, int zero_offset = 0);
 
     private:
-        float resolution_;
+        unsigned int positions_per_revolution_;
+        bool reversed_;
         int zero_offset_;
 
     };
