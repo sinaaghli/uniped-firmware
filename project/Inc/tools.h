@@ -25,6 +25,12 @@ namespace slc::tools {
         return parity;
     }
 
+    template<typename T>
+    T pmod(T numerator, T denominator)
+    {
+        return (numerator % denominator + denominator) % denominator;
+    }
+
 }
 
 
