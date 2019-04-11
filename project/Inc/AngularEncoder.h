@@ -2,6 +2,8 @@
 // Created by Michael R. Shannon on 4/3/19.
 //
 
+#include <cstddef>
+#include <utility>
 #include "Status.h"
 #include "Sensor.h"
 
@@ -15,19 +17,19 @@ namespace slc {
     {
     public:
 
-        virtual int raw_position() const = 0;
+        virtual std::pair<size_t, int> raw_position() const = 0;
 
         void calibrate(int position = 0);
 
-        int position() const;
+        std::pair<size_t, int> position() const;
 
         int zero_offset() const;
 
-        float degrees() const;
+        std::pair<size_t, float> degrees() const;
 
         float resolution_degrees() const;
 
-        float radians() const;
+        std::pair<size_t, float> radians() const;
 
         float resolution_radians() const;
 

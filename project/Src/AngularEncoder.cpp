@@ -16,12 +16,13 @@ namespace slc {
 
     void AngularEncoder::calibrate(int position)
     {
-        zero_offset_ = raw_position() - position;
+        zero_offset_ = raw_position().second - position;
     }
 
-    int AngularEncoder::position() const
+    std::pair<size_t, int> AngularEncoder::position() const
     {
-        return raw_position() - zero_offset_;
+        auto [count, raw_pos] = raw_position();
+        return {count, raw_pos - zero_offset_};
     }
 
     int AngularEncoder::zero_offset() const
@@ -29,9 +30,10 @@ namespace slc {
         return zero_offset_;
     }
 
-    float AngularEncoder::degrees() const
+    std::pair<size_t, float> AngularEncoder::degrees() const
     {
-        return resolution_degrees() * position();
+        auto [count, pos] = position();
+        return {count, resolution_degrees() * pos};
     }
 
     float AngularEncoder::resolution_degrees() const
@@ -39,9 +41,10 @@ namespace slc {
         return resolution_;
     }
 
-    float AngularEncoder::radians() const
+    std::pair<size_t, float> AngularEncoder::radians() const
     {
-        return resolution_radians() * position();
+        auto [count, pos] = position();
+        return {count, resolution_radians() * pos};
     }
 
     float AngularEncoder::resolution_radians() const
