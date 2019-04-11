@@ -15,7 +15,7 @@ namespace slc {
     class Sensor
     {
     public:
-        virtual Status sample(bool buffer) = 0;
+        virtual Status sample(bool blocking) = 0;
 
         virtual Status status() const = 0;
 
