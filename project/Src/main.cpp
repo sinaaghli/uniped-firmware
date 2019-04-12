@@ -83,6 +83,10 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+ADC_HandleTypeDef hadc2;
+
+DMA_HandleTypeDef hdma_adc2;
+
 CRC_HandleTypeDef hcrc;
 
 SPI_HandleTypeDef hspi2;
@@ -98,11 +102,15 @@ void SystemClock_Config(void);
 
 static void MX_GPIO_Init(void);
 
+static void MX_DMA_Init(void);
+
 static void MX_CRC_Init(void);
 
 static void MX_SPI2_Init(void);
 
 static void MX_TIM5_Init(void);
+
+static void MX_ADC2_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -283,6 +291,82 @@ void SystemClock_Config(void)
     }
 }
 
+
+/**
+  * @brief ADC2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_ADC2_Init(void)
+{
+
+    /* USER CODE BEGIN ADC2_Init 0 */
+
+    /* USER CODE END ADC2_Init 0 */
+
+    ADC_ChannelConfTypeDef sConfig = {0};
+
+    /* USER CODE BEGIN ADC2_Init 1 */
+
+    /* USER CODE END ADC2_Init 1 */
+    /**Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
+    */
+    hadc2.Instance = ADC2;
+    hadc2.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV2;
+    hadc2.Init.Resolution = ADC_RESOLUTION_12B;
+    hadc2.Init.ScanConvMode = ENABLE;
+    hadc2.Init.ContinuousConvMode = ENABLE;
+    hadc2.Init.DiscontinuousConvMode = DISABLE;
+    hadc2.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+    hadc2.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+    hadc2.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+    hadc2.Init.NbrOfConversion = 4;
+    hadc2.Init.DMAContinuousRequests = DISABLE;
+    hadc2.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+    if (HAL_ADC_Init(&hadc2) != HAL_OK)
+    {
+        Error_Handler();
+    }
+    /**Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+    */
+    sConfig.Channel = ADC_CHANNEL_1;
+    sConfig.Rank = 1;
+    sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+    if (HAL_ADC_ConfigChannel(&hadc2, &sConfig) != HAL_OK)
+    {
+        Error_Handler();
+    }
+    /**Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+    */
+    sConfig.Channel = ADC_CHANNEL_2;
+    sConfig.Rank = 2;
+    if (HAL_ADC_ConfigChannel(&hadc2, &sConfig) != HAL_OK)
+    {
+        Error_Handler();
+    }
+    /**Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+    */
+    sConfig.Channel = ADC_CHANNEL_8;
+    sConfig.Rank = 3;
+    if (HAL_ADC_ConfigChannel(&hadc2, &sConfig) != HAL_OK)
+    {
+        Error_Handler();
+    }
+    /**Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+    */
+    sConfig.Channel = ADC_CHANNEL_9;
+    sConfig.Rank = 4;
+    if (HAL_ADC_ConfigChannel(&hadc2, &sConfig) != HAL_OK)
+    {
+        Error_Handler();
+    }
+    /* USER CODE BEGIN ADC2_Init 2 */
+
+    /* USER CODE END ADC2_Init 2 */
+
+}
+
+
 /**
   * @brief CRC Initialization Function
   * @param None
@@ -391,6 +475,23 @@ static void MX_TIM5_Init(void)
     /* USER CODE END TIM5_Init 2 */
 
 }
+
+
+/**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+    /* DMA controller clock enable */
+    __HAL_RCC_DMA2_CLK_ENABLE();
+
+    /* DMA interrupt init */
+    /* DMA2_Stream2_IRQn interrupt configuration */
+    HAL_NVIC_SetPriority(DMA2_Stream2_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(DMA2_Stream2_IRQn);
+
+}
+
 
 /**
   * @brief GPIO Initialization Function
