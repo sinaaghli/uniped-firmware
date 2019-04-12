@@ -121,6 +121,8 @@ typedef struct __attribute__((packed))
     uint32_t usec;
     size_t hip_angle_count;
     float hip_angle;
+    size_t knee_angle_count;
+    float knee_angle;
 } SystemStatus;
 
 
@@ -182,10 +184,12 @@ int main(void)
     // Setup angular encoder.
     auto angle_driver = std::make_shared<slc::AS5045Driver>(
             std::make_unique<slc::SerialPeripheralInterface>(
-                    &hspi2, NSS2_GPIO_Port, NSS2_Pin));
+                    &hspi2, NSS2_GPIO_Port, NSS2_Pin), 2);
     slc::AS5045 hip(angle_driver, 0, false);
-    hip.sample(true);
+    slc::AS5045 knee(angle_driver, 1, false);
+    angle_driver->sample(true);
     hip.calibrate();  // initial angle is 0
+    knee.calibrate();  // initial angle is 0
 
     /* USER CODE END 2 */
 
@@ -215,10 +219,13 @@ int main(void)
         }
 
         // read hip angle
-        auto [count, angle] = hip.degrees();
-        system_status.hip_angle_count = count;
-        system_status.hip_angle = angle;
-        hip.sample(false);
+        angle_driver->sample(true);
+        auto [hip_count, hip_angle] = hip.raw_position();
+        auto [knee_count, knee_angle] = knee.raw_position();
+        system_status.hip_angle_count = hip_count;
+        system_status.knee_angle_count = knee_count;
+        system_status.hip_angle = hip_angle;
+        system_status.knee_angle = knee_angle;
 
         // Update LED state.
         HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,
