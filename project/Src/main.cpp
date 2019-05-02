@@ -65,6 +65,7 @@
 #include "SerialPeripheralInterface.h"
 #include "AS5045Driver.h"
 #include "AS5045.h"
+#include "GP2Y0A41SK0F.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -164,10 +165,13 @@ int main(void)
 
     /* Initialize all configured peripherals */
     MX_GPIO_Init();
+    MX_DMA_Init();
     MX_USB_DEVICE_Init();
     MX_CRC_Init();
     MX_TIM5_Init();
     MX_SPI2_Init();
+    MX_ADC2_Init();
+
     /* USER CODE BEGIN 2 */
 
     HAL_GPIO_WritePin(NSS2_GPIO_Port, NSS2_Pin, GPIO_PIN_SET);
@@ -198,6 +202,12 @@ int main(void)
     angle_driver->sample(true);
     hip.calibrate();  // initial angle is 0
     knee.calibrate();  // initial angle is 0
+
+    uint16_t adc_readings[4];
+    HAL_ADC_Start_DMA(&hadc2, reinterpret_cast<uint32_t *>(adc_readings), 4);
+    slc::GP2Y0A41SK0F distanceSensor0(&adc_readings[2]);
+    slc::GP2Y0A41SK0F distanceSensor1(&adc_readings[2]);
+
 
     /* USER CODE END 2 */
 
@@ -312,7 +322,7 @@ static void MX_ADC2_Init(void)
     /**Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
     */
     hadc2.Instance = ADC2;
-    hadc2.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV2;
+    hadc2.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV8;
     hadc2.Init.Resolution = ADC_RESOLUTION_12B;
     hadc2.Init.ScanConvMode = ENABLE;
     hadc2.Init.ContinuousConvMode = ENABLE;
@@ -321,7 +331,7 @@ static void MX_ADC2_Init(void)
     hadc2.Init.ExternalTrigConv = ADC_SOFTWARE_START;
     hadc2.Init.DataAlign = ADC_DATAALIGN_RIGHT;
     hadc2.Init.NbrOfConversion = 4;
-    hadc2.Init.DMAContinuousRequests = DISABLE;
+    hadc2.Init.DMAContinuousRequests = ENABLE;
     hadc2.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
     if (HAL_ADC_Init(&hadc2) != HAL_OK)
     {
@@ -331,7 +341,7 @@ static void MX_ADC2_Init(void)
     */
     sConfig.Channel = ADC_CHANNEL_1;
     sConfig.Rank = 1;
-    sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+    sConfig.SamplingTime = ADC_SAMPLETIME_56CYCLES;
     if (HAL_ADC_ConfigChannel(&hadc2, &sConfig) != HAL_OK)
     {
         Error_Handler();
