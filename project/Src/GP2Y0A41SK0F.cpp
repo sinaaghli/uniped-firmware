@@ -24,7 +24,7 @@ namespace slc {
         float centimeters =
                 powf(15.3504349560002f/(voltage + 0.14812358860854632f),
                         1.2379065907953468f);
-        return 100.0f*centimeters;
+        return centimeters/100.0f;
     }
 
 }

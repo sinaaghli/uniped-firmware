@@ -28,6 +28,8 @@ class Controller(QWidget):
     def init_ui(self):
         self.setWindowTitle('LED Controller')
 
+        name_width = 120
+
         red_button = QPushButton('Red', self)
         red_button.setCheckable(True)
         red_button.clicked[bool].connect(self.set_led)
@@ -52,7 +54,7 @@ class Controller(QWidget):
 
         # seconds
         seconds_title = QLabel('Seconds:', self)
-        seconds_title.setMinimumWidth(100)
+        seconds_title.setMinimumWidth(name_width)
         self.seconds_value = QLineEdit(self)
         self.seconds_value.setReadOnly(True)
         self.seconds_value.setText('0')
@@ -61,8 +63,8 @@ class Controller(QWidget):
         seconds_box.addWidget(self.seconds_value)
 
         # hip angle
-        hip_angle_title = QLabel('Hip Angle:', self)
-        hip_angle_title.setMinimumWidth(100)
+        hip_angle_title = QLabel('Hip Angle (deg):', self)
+        hip_angle_title.setMinimumWidth(name_width)
         self.hip_angle_value = QLineEdit(self)
         self.hip_angle_value.setReadOnly(True)
         self.hip_angle_value.setText('0')
@@ -71,8 +73,8 @@ class Controller(QWidget):
         hip_angle_box.addWidget(self.hip_angle_value)
 
         # knee angle
-        knee_angle_title = QLabel('Knee Angle:', self)
-        knee_angle_title.setMinimumWidth(100)
+        knee_angle_title = QLabel('Knee Angle (deg):', self)
+        knee_angle_title.setMinimumWidth(name_width)
         self.knee_angle_value = QLineEdit(self)
         self.knee_angle_value.setReadOnly(True)
         self.knee_angle_value.setText('0')
@@ -80,11 +82,22 @@ class Controller(QWidget):
         knee_angle_box.addWidget(knee_angle_title)
         knee_angle_box.addWidget(self.knee_angle_value)
 
+        # distance
+        distance_title = QLabel('Distance (cm):', self)
+        distance_title.setMinimumWidth(name_width)
+        self.distance_value = QLineEdit(self)
+        self.distance_value.setReadOnly(True)
+        self.distance_value.setText('0')
+        distance_box = QHBoxLayout()
+        distance_box.addWidget(distance_title)
+        distance_box.addWidget(self.distance_value)
+
         vbox = QVBoxLayout()
         vbox.addLayout(led_box)
         vbox.addLayout(seconds_box)
         vbox.addLayout(hip_angle_box)
         vbox.addLayout(knee_angle_box)
+        vbox.addLayout(distance_box)
 
         self.setLayout(vbox)
         self.show()
@@ -137,10 +150,11 @@ class Controller(QWidget):
             self.handle_status_packet(length, data[4:(total_length - 4)])
 
     def handle_status_packet(self, length, data):
-        msec, hip_angle, knee_angle = struct.unpack('<Lff', data)
+        msec, hip_angle, knee_angle, distance = struct.unpack('<Lfff', data)
         self.seconds_value.setText(f'{msec/1000:0.1f}')
         self.hip_angle_value.setText(f'{hip_angle:0.1f}')
         self.knee_angle_value.setText(f'{knee_angle:0.1f}')
+        self.distance_value.setText(f'{distance*100:0.1f}')
 
 
 if __name__ == '__main__':

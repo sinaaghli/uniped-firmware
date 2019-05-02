@@ -129,6 +129,7 @@ typedef struct __attribute__((packed))
     uint32_t msec;
     float hip_angle;
     float knee_angle;
+    float distance;
 } SystemStatus;
 
 
@@ -182,14 +183,14 @@ int main(void)
 
     auto boot_time_msec = std::chrono::steady_clock::now();
 
-    // Setup communications.
+    // setup communications
     auto usb = std::make_unique<slc::USBSerial>(&hUsbDeviceFS);
     usb->register_it();
     auto server = std::make_unique<slc::PacketServer>(
             std::move(usb), hcrc, MAGIC_BYTE, BUFFER_LENGTH);
     server->register_handler(8, handler8);
 
-    // Setup angular encoder.
+    // setup angular encoder
     auto angle_driver = std::make_shared<slc::AS5045Driver>(
             std::make_unique<slc::SerialPeripheralInterface>(
                     &hspi2, NSS2_GPIO_Port, NSS2_Pin), 2);
@@ -199,10 +200,12 @@ int main(void)
     hip.calibrate();  // initial angle is 0
     knee.calibrate();  // initial angle is 0
 
+    // setup ADC sensors
     uint16_t adc_readings[4];
     HAL_ADC_Start_DMA(&hadc2, reinterpret_cast<uint32_t *>(adc_readings), 4);
-    slc::GP2Y0A41SK0F distanceSensor0(&adc_readings[2]);
-    slc::GP2Y0A41SK0F distanceSensor1(&adc_readings[2]);
+    slc::GP2Y0A41SK0F distanceSensor(&adc_readings[2]);
+    HAL_Delay(50);
+    distanceSensor.calibrate(0); // set current distance to zero
 
 
     /* USER CODE END 2 */
@@ -234,6 +237,9 @@ int main(void)
         angle_driver->sample(false);
         system_status.hip_angle = hip.degrees().second;
         system_status.knee_angle = knee.degrees().second;
+
+        // read distance sensors
+        system_status.distance = distanceSensor.meters();
 
         // update LED state
         HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,
