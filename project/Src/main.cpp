@@ -127,10 +127,7 @@ void handler8(void *packet, size_t size)
 typedef struct __attribute__((packed))
 {
     uint32_t msec;
-    uint32_t usec;
-    size_t hip_angle_count;
     float hip_angle;
-    size_t knee_angle_count;
     float knee_angle;
 } SystemStatus;
 
@@ -181,10 +178,9 @@ int main(void)
 
     int delay = 50;
 
-    SystemStatus system_status{.msec = 0, .usec = 0};
+    SystemStatus system_status{.msec = 0, .hip_angle = 0.0, .knee_angle = 0.0};
 
     auto boot_time_msec = std::chrono::steady_clock::now();
-    auto boot_time_usec = std::chrono::high_resolution_clock::now();
 
     // Setup communications.
     auto usb = std::make_unique<slc::USBSerial>(&hUsbDeviceFS);
@@ -219,33 +215,27 @@ int main(void)
 
         /* USER CODE BEGIN 3 */
 
-        // Update system status.
+        // update time
         system_status.msec = (uint32_t) std::chrono::duration_cast<std::chrono::milliseconds>(
                 std::chrono::steady_clock::now() - boot_time_msec).count();
-        system_status.usec = (uint32_t) std::chrono::duration_cast<std::chrono::microseconds>(
-                std::chrono::high_resolution_clock::now() - boot_time_usec).count();
 
-        // Write packets to USB serial.
+        // write packets to USB serial
         memcpy(server->init_packet(10, sizeof(system_status)),
                &system_status, sizeof(system_status));
         server->send_packet();
 
-        // Handle received packets.
+        // handle received packets
         if (server->receive_ready())
         {
             server->receive_packet();
         }
 
-        // read hip angle
-        angle_driver->sample(true);
-        auto [hip_count, hip_angle] = hip.raw_position();
-        auto [knee_count, knee_angle] = knee.raw_position();
-        system_status.hip_angle_count = hip_count;
-        system_status.knee_angle_count = knee_count;
-        system_status.hip_angle = hip_angle;
-        system_status.knee_angle = knee_angle;
+        // read hip and knee angle
+        angle_driver->sample(false);
+        system_status.hip_angle = hip.degrees().second;
+        system_status.knee_angle = knee.degrees().second;
 
-        // Update LED state.
+        // update LED state
         HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,
                           (led_state & 1) ? GPIO_PIN_SET : GPIO_PIN_RESET);
         HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin,
