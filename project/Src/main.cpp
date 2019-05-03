@@ -58,6 +58,7 @@
 #include <cstdio>
 #include <chrono>
 #include <memory>
+#include <INA169.h>
 #include "usbd_cdc_if.h"
 #include "tools.h"
 #include "USBSerial.h"
@@ -128,7 +129,9 @@ typedef struct __attribute__((packed))
 {
     uint32_t msec;
     float hip_angle;
+    float hip_current;
     float knee_angle;
+    float knee_current;
     float distance;
 } SystemStatus;
 
@@ -179,7 +182,13 @@ int main(void)
 
     int delay = 50;
 
-    SystemStatus system_status{.msec = 0, .hip_angle = 0.0, .knee_angle = 0.0};
+    SystemStatus system_status{
+            .msec = 0,
+            .hip_angle = 0.0,
+            .hip_current = 0.0,
+            .knee_angle = 0.0,
+            .knee_current = 0.0,
+            .distance = 0.0};
 
     auto boot_time_msec = std::chrono::steady_clock::now();
 
@@ -194,18 +203,18 @@ int main(void)
     auto angle_driver = std::make_shared<slc::AS5045Driver>(
             std::make_unique<slc::SerialPeripheralInterface>(
                     &hspi2, NSS2_GPIO_Port, NSS2_Pin), 2);
-    slc::AS5045 hip(angle_driver, 0, false);
-    slc::AS5045 knee(angle_driver, 1, false);
+    slc::AS5045 hip_encoder(angle_driver, 0, false);
+    slc::AS5045 knee_encoder(angle_driver, 1, false);
     angle_driver->sample(true);
-    hip.calibrate();  // initial angle is 0
-    knee.calibrate();  // initial angle is 0
+    hip_encoder.calibrate();  // initial angle is 0
+    knee_encoder.calibrate();  // initial angle is 0
 
     // setup ADC sensors
     uint16_t adc_readings[4];
     HAL_ADC_Start_DMA(&hadc2, reinterpret_cast<uint32_t *>(adc_readings), 4);
-    slc::GP2Y0A41SK0F distanceSensor(&adc_readings[2]);
-    HAL_Delay(50);
-    distanceSensor.calibrate(0); // set current distance to zero
+    slc::INA169 hip_current_meter(&adc_readings[0]);
+    slc::INA169 knee_current_meter(&adc_readings[1]);
+    slc::GP2Y0A41SK0F distance_sensor(&adc_readings[2]);
 
 
     /* USER CODE END 2 */
@@ -235,11 +244,15 @@ int main(void)
 
         // read hip and knee angle
         angle_driver->sample(false);
-        system_status.hip_angle = hip.degrees().second;
-        system_status.knee_angle = knee.degrees().second;
+        system_status.hip_angle = hip_encoder.degrees().second;
+        system_status.knee_angle = knee_encoder.degrees().second;
+
+        // read hip and knee current sensors
+        system_status.hip_current = hip_current_meter.amps();
+        system_status.knee_current = knee_current_meter.amps();
 
         // read distance sensors
-        system_status.distance = distanceSensor.meters();
+        system_status.distance = distance_sensor.meters();
 
         // update LED state
         HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,

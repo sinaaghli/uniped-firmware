@@ -72,6 +72,16 @@ class Controller(QWidget):
         hip_angle_box.addWidget(hip_angle_title)
         hip_angle_box.addWidget(self.hip_angle_value)
 
+        # hip current
+        hip_current_title = QLabel('Hip Current (mA):', self)
+        hip_current_title.setMinimumWidth(name_width)
+        self.hip_current_value = QLineEdit(self)
+        self.hip_current_value.setReadOnly(True)
+        self.hip_current_value.setText('0')
+        hip_current_box = QHBoxLayout()
+        hip_current_box.addWidget(hip_current_title)
+        hip_current_box.addWidget(self.hip_current_value)
+
         # knee angle
         knee_angle_title = QLabel('Knee Angle (deg):', self)
         knee_angle_title.setMinimumWidth(name_width)
@@ -81,6 +91,16 @@ class Controller(QWidget):
         knee_angle_box = QHBoxLayout()
         knee_angle_box.addWidget(knee_angle_title)
         knee_angle_box.addWidget(self.knee_angle_value)
+
+        # knee current
+        knee_current_title = QLabel('Hip Current (mA):', self)
+        knee_current_title.setMinimumWidth(name_width)
+        self.knee_current_value = QLineEdit(self)
+        self.knee_current_value.setReadOnly(True)
+        self.knee_current_value.setText('0')
+        knee_current_box = QHBoxLayout()
+        knee_current_box.addWidget(knee_current_title)
+        knee_current_box.addWidget(self.knee_current_value)
 
         # distance
         distance_title = QLabel('Distance (cm):', self)
@@ -96,7 +116,9 @@ class Controller(QWidget):
         vbox.addLayout(led_box)
         vbox.addLayout(seconds_box)
         vbox.addLayout(hip_angle_box)
+        vbox.addLayout(hip_current_box)
         vbox.addLayout(knee_angle_box)
+        vbox.addLayout(knee_current_box)
         vbox.addLayout(distance_box)
 
         self.setLayout(vbox)
@@ -150,10 +172,13 @@ class Controller(QWidget):
             self.handle_status_packet(length, data[4:(total_length - 4)])
 
     def handle_status_packet(self, length, data):
-        msec, hip_angle, knee_angle, distance = struct.unpack('<Lfff', data)
+        msec, hip_angle, hip_current, knee_angle, knee_current, distance = (
+            struct.unpack('<Lfffff', data))
         self.seconds_value.setText(f'{msec/1000:0.1f}')
         self.hip_angle_value.setText(f'{hip_angle:0.1f}')
+        self.hip_current_value.setText(f'{hip_current*1000:0.1f}')
         self.knee_angle_value.setText(f'{knee_angle:0.1f}')
+        self.knee_current_value.setText(f'{knee_current*1000:0.1f}')
         self.distance_value.setText(f'{distance*100:0.1f}')
 
 
