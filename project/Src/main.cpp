@@ -67,6 +67,9 @@
 #include "AS5045Driver.h"
 #include "AS5045.h"
 #include "GP2Y0A41SK0F.h"
+#include "PWM.h"
+#include "GPIO.h"
+#include "Motor.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -197,6 +200,12 @@ int main(void)
 
     auto boot_time_msec = std::chrono::steady_clock::now();
 
+    // gpio pins
+    slc::GPIO orange_led(LD3_GPIO_Port, LD3_Pin);
+    slc::GPIO green_led(LD4_GPIO_Port, LD4_Pin);
+    slc::GPIO red_led(LD5_GPIO_Port, LD5_Pin);
+    slc::GPIO blue_led(LD6_GPIO_Port, LD6_Pin);
+
     // setup communications
     auto usb = std::make_unique<slc::USBSerial>(&hUsbDeviceFS);
     usb->register_it();
@@ -220,6 +229,16 @@ int main(void)
     slc::INA169 hip_current_meter(&adc_readings[0]);
     slc::INA169 knee_current_meter(&adc_readings[1]);
     slc::GP2Y0A41SK0F distance_sensor(&adc_readings[2]);
+
+    // setup motor controllers
+    slc::Motor hip(
+            slc::PWM(&htim3, TIM_CHANNEL_1, 100),
+            slc::GPIO(Hip_C_GPIO_Port, Hip_C_Pin),
+            slc::GPIO(Hip_D_GPIO_Port, Hip_D_Pin));
+    slc::Motor knee(
+            slc::PWM(&htim3, TIM_CHANNEL_2, 100),
+            slc::GPIO(Knee_C_GPIO_Port, Knee_C_Pin),
+            slc::GPIO(Knee_D_GPIO_Port, Knee_D_Pin));
 
 
     /* USER CODE END 2 */
@@ -260,14 +279,10 @@ int main(void)
         system_status.distance = distance_sensor.meters();
 
         // update LED state
-        HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,
-                          (led_state & 1) ? GPIO_PIN_SET : GPIO_PIN_RESET);
-        HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin,
-                          (led_state & 2) ? GPIO_PIN_SET : GPIO_PIN_RESET);
-        HAL_GPIO_WritePin(LD5_GPIO_Port, LD5_Pin,
-                          (led_state & 4) ? GPIO_PIN_SET : GPIO_PIN_RESET);
-        HAL_GPIO_WritePin(LD6_GPIO_Port, LD6_Pin,
-                          (led_state & 8) ? GPIO_PIN_SET : GPIO_PIN_RESET);
+        red_led.write(led_state & 1);
+        orange_led.write(led_state & 2);
+        green_led.write(led_state & 4);
+        blue_led.write(led_state & 8);
         HAL_Delay(delay);
     }
     /* USER CODE END 3 */
@@ -479,7 +494,7 @@ static void MX_TIM3_Init(void)
     htim3.Instance = TIM3;
     htim3.Init.Prescaler = 0;
     htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-    htim3.Init.Period = 0xFFFF;
+    htim3.Init.Period = 100;
     htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
     if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
     {

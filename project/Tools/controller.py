@@ -141,9 +141,9 @@ class Controller(QWidget):
 
     def send_led_command(self):
         control_byte = 0
-        control_byte |= 4 if self._red else 0
-        control_byte |= 1 if self._orange else 0
-        control_byte |= 2 if self._green else 0
+        control_byte |= 1 if self._red else 0
+        control_byte |= 2 if self._orange else 0
+        control_byte |= 4 if self._green else 0
         control_byte |= 8 if self._blue else 0
         packet = b'\x7b\x08\x01\x00' + bytes([control_byte]) + b'\x00\x00\x00'
         signed_packet = (packet + struct.pack('<L', stm32_crc(packet)))
