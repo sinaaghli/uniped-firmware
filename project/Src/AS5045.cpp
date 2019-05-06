@@ -61,7 +61,7 @@ namespace slc {
         return driver_->busy();
     }
 
-    std::pair<size_t, int> AS5045::raw_position() const
+    std::pair<size_t, int> AS5045::raw_value() const
     {
         check_for_new_();
         return {sample_count_, raw_position_};

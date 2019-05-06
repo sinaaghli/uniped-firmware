@@ -17,7 +17,7 @@ namespace slc {
     {
     public:
 
-        virtual std::pair<size_t, int> raw_position() const = 0;
+        virtual std::pair<size_t, int> raw_value() const = 0;
 
         void calibrate(int position = 0);
 
@@ -25,7 +25,7 @@ namespace slc {
 
         std::pair<size_t, int> position() const;
 
-        unsigned int postions_per_revolution() const;
+        unsigned int revolution_size() const;
 
         std::pair<size_t, float> degrees() const;
 
@@ -41,9 +41,11 @@ namespace slc {
                 bool reversed = false, int zero_offset = 0);
 
     private:
-        unsigned int positions_per_revolution_;
+        unsigned int revolution_size_;
         bool reversed_;
         int zero_offset_;
+        mutable int revolutions_ = 0;
+        mutable int old_raw_value_ = 0;
 
     };
 

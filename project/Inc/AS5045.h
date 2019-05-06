@@ -36,7 +36,7 @@ namespace slc {
 
         bool busy() const override;
 
-        std::pair<size_t, int> raw_position() const override;
+        std::pair<size_t, int> raw_value() const override;
 
     private:
         static constexpr unsigned int positions_per_revolution = 4096;
