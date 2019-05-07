@@ -69,7 +69,8 @@
 #include "GP2Y0A41SK0F.h"
 #include "PWM.h"
 #include "GPIO.h"
-#include "Motor.h"
+#include "EncodedMotor.h"
+#include "PIDController.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -217,11 +218,11 @@ int main(void)
     auto angle_driver = std::make_shared<slc::AS5045Driver>(
             std::make_unique<slc::SerialPeripheralInterface>(
                     &hspi2, NSS2_GPIO_Port, NSS2_Pin), 2);
-    slc::AS5045 hip_encoder(angle_driver, 0, false);
-    slc::AS5045 knee_encoder(angle_driver, 1, false);
+    auto hip_encoder = std::make_shared<slc::AS5045>(angle_driver, 0, false);
+    auto knee_encoder = std::make_shared<slc::AS5045>(angle_driver, 1, false);
     angle_driver->sample(true);
-    hip_encoder.calibrate();  // initial angle is 0
-    knee_encoder.calibrate();  // initial angle is 0
+    hip_encoder->calibrate();  // initial angle is 0
+    knee_encoder->calibrate();  // initial angle is 0
 
     // setup ADC sensors
     uint16_t adc_readings[4];
@@ -231,15 +232,25 @@ int main(void)
     slc::GP2Y0A41SK0F distance_sensor(&adc_readings[2]);
 
     // setup motor controllers
-    slc::Motor hip(
+    slc::EncodedMotor hip(
             slc::PWM(&htim3, TIM_CHANNEL_1, 100),
             slc::GPIO(Hip_C_GPIO_Port, Hip_C_Pin),
-            slc::GPIO(Hip_D_GPIO_Port, Hip_D_Pin));
-    slc::Motor knee(
+            slc::GPIO(Hip_D_GPIO_Port, Hip_D_Pin),
+            hip_encoder,
+            slc::PIDController(0.01f, 0.0f, 0.0f),
+            slc::PIDController(0.01f, 0.0f, 0.0f),
+            -90.0f, 90.0f);
+    slc::EncodedMotor knee(
             slc::PWM(&htim3, TIM_CHANNEL_2, 100),
             slc::GPIO(Knee_C_GPIO_Port, Knee_C_Pin),
-            slc::GPIO(Knee_D_GPIO_Port, Knee_D_Pin));
+            slc::GPIO(Knee_D_GPIO_Port, Knee_D_Pin),
+            knee_encoder,
+            slc::PIDController(0.01f, 0.0f, 0.0f),
+            slc::PIDController(0.01f, 0.0f, 0.0f),
+            -90.0f, 90.0f);
 
+    hip.angle(0);
+    knee.angle(0);
 
     /* USER CODE END 2 */
 
@@ -268,8 +279,8 @@ int main(void)
 
         // read hip and knee angle
         angle_driver->sample(false);
-        system_status.hip_angle = hip_encoder.degrees().second;
-        system_status.knee_angle = knee_encoder.degrees().second;
+        system_status.hip_angle = hip_encoder->degrees().second;
+        system_status.knee_angle = knee_encoder->degrees().second;
 
         // read hip and knee current sensors
         system_status.hip_current = hip_current_meter.amps();
@@ -277,6 +288,9 @@ int main(void)
 
         // read distance sensors
         system_status.distance = distance_sensor.meters();
+
+        hip.tick();
+        knee.tick();
 
         // update LED state
         red_led.write(led_state & 1);

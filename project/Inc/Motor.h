@@ -18,13 +18,13 @@ namespace slc {
 
         Motor(PWM enable, GPIO c, GPIO d);
 
-        void forward(int power = 100);
+        virtual void forward(int power);
 
-        void reverse(int power = 100);
+        virtual void reverse(int power);
 
-        void stop(int power = 100);
+        virtual void stop(int power);
 
-        void drift();
+        virtual void drift();
 
     private:
         PWM enable_;
