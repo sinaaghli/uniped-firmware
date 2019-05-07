@@ -19,34 +19,34 @@ namespace slc {
     public:
         PIDController();
 
-        PIDController(double proportional_gain,
-                      double integral_gain,
-                      double derivative_gain);
+        PIDController(float proportional_gain,
+                      float integral_gain,
+                      float derivative_gain);
 
-        void set_proportional_gain(double gain);
+        void set_proportional_gain(float gain);
 
-        void set_integral_gain(double gain);
+        void set_integral_gain(float gain);
 
-        void set_derivative_gain(double gain);
+        void set_derivative_gain(float gain);
 
-        void set_target(double target);
+        void set_target(float target);
 
-        void set_input(double input);
+        void set_input(float input);
 
-//    void set_plant_errorSetPlantError(double error/*desired-current*/);
+        float get_target();
 
-        double get_output();
+        float get_output();
 
     private:
-        double proportional_gain_;
-        double integral_gain_;
-        double derivative_gain_;
-        double integral_value_;
-        double target_;
-        double previous_error_;
-        double current_error_;
-        std::chrono::high_resolution_clock::time_point previous_error_time_;
-        std::chrono::high_resolution_clock::time_point current_error_time_;
+        float proportional_gain_;
+        float integral_gain_;
+        float derivative_gain_;
+        float integral_value_;
+        float target_;
+        float previous_error_ = 0;
+        float current_error_ = 0;
+        std::chrono::high_resolution_clock ::time_point previous_error_time_;
+        std::chrono::high_resolution_clock ::time_point current_error_time_;
     };
 
 }
