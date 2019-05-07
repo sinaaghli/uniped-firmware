@@ -4,7 +4,7 @@
 
 #include <cstdlib>
 #include <cmath>
-#include <AngularEncoder.h>
+#include <chrono>
 
 #include "tools.h"
 #include "AngularEncoder.h"
@@ -33,12 +33,22 @@ namespace slc {
 
     std::pair<size_t, int> AngularEncoder::position() const
     {
+        auto new_time = std::chrono::high_resolution_clock::now();
         auto[count, pos] = raw_value();
-        if (count > 1 && std::abs(pos - old_raw_value_) >= revolution_size_/2)
+        if (count > 1)
         {
-            revolutions_ += pos < old_raw_value_? 1 : -1;
+            if (std::abs(pos - old_raw_value_) >= revolution_size_/2)
+            {
+                revolutions_ += pos < old_raw_value_? 1 : -1;
+            }
+            float delta_time =
+                    std::chrono::duration_cast<std::chrono::milliseconds>(
+                            new_time - old_time_).count() * 0.000060f;
+            rpm_ = (static_cast<float>(pos - old_raw_value_)/revolution_size_
+                    )/delta_time;
         }
         old_raw_value_ = pos;
+        old_time_ = new_time;
         pos += revolution_size_ * revolutions_;
         pos = pos - zero_offset_;
         if (reversed_)
@@ -73,6 +83,11 @@ namespace slc {
     float AngularEncoder::resolution_radians() const
     {
         return (2.0f * 3.14159265358979323846f) / revolution_size_;
+    }
+
+    std::pair<size_t, float> AngularEncoder::rpm() const
+    {
+        return {sample_count(), rpm_};
     }
 
 }

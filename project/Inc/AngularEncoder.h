@@ -4,6 +4,8 @@
 
 #include <cstddef>
 #include <utility>
+#include <chrono>
+
 #include "Status.h"
 #include "Sensor.h"
 
@@ -35,6 +37,8 @@ namespace slc {
 
         float resolution_radians() const;
 
+        std::pair<size_t, float> rpm() const;
+
     protected:
         explicit AngularEncoder(
                 unsigned int positions_per_revolution,
@@ -46,6 +50,8 @@ namespace slc {
         int zero_offset_;
         mutable int revolutions_ = 0;
         mutable int old_raw_value_ = 0;
+        mutable float rpm_ = 0.0;
+        mutable std::chrono::high_resolution_clock::time_point old_time_;
 
     };
 
