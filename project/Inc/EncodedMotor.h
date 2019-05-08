@@ -45,8 +45,8 @@ namespace slc {
         void speed(float rpm);
         void tick();
         std::function<void()> get_ticker();
-        PIDController &get_position_controller();
-        PIDController &get_velocity_controller();
+        PIDController *get_position_controller();
+        PIDController *get_velocity_controller();
 
     private:
         EncodedMotorMode mode_ = EncodedMotorMode::power_drift;

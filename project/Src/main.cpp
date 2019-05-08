@@ -71,6 +71,7 @@
 #include "GPIO.h"
 #include "EncodedMotor.h"
 #include "PIDController.h"
+#include "Controller.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -128,7 +129,7 @@ static void MX_ADC2_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-void handler8(void *packet, size_t size)
+void led_handler(void *packet, size_t size)
 {
     led_state = *static_cast<uint8_t *>(packet);
 }
@@ -207,13 +208,6 @@ int main(void)
     slc::GPIO red_led(LD5_GPIO_Port, LD5_Pin);
     slc::GPIO blue_led(LD6_GPIO_Port, LD6_Pin);
 
-    // setup communications
-    auto usb = std::make_unique<slc::USBSerial>(&hUsbDeviceFS);
-    usb->register_it();
-    auto server = std::make_unique<slc::PacketServer>(
-            std::move(usb), hcrc, MAGIC_BYTE, BUFFER_LENGTH);
-    server->register_handler(8, handler8);
-
     // setup angular encoder
     auto angle_driver = std::make_shared<slc::AS5045Driver>(
             std::make_unique<slc::SerialPeripheralInterface>(
@@ -232,25 +226,35 @@ int main(void)
     slc::GP2Y0A41SK0F distance_sensor(&adc_readings[2]);
 
     // setup motor controllers
-    slc::EncodedMotor hip(
+    slc::Controller controller;
+    controller.add_motor(std::make_unique<slc::EncodedMotor>(
             slc::PWM(&htim3, TIM_CHANNEL_1, 100),
             slc::GPIO(Hip_C_GPIO_Port, Hip_C_Pin),
             slc::GPIO(Hip_D_GPIO_Port, Hip_D_Pin),
             hip_encoder,
             slc::PIDController(0.01f, 0.0f, 0.0f),
             slc::PIDController(0.01f, 0.0f, 0.0f),
-            -90.0f, 90.0f);
-    slc::EncodedMotor knee(
+            -90.0f, 90.0f));
+    controller.add_motor(std::make_unique<slc::EncodedMotor>(
             slc::PWM(&htim3, TIM_CHANNEL_2, 100),
             slc::GPIO(Knee_C_GPIO_Port, Knee_C_Pin),
             slc::GPIO(Knee_D_GPIO_Port, Knee_D_Pin),
-            knee_encoder,
+            hip_encoder,
             slc::PIDController(0.01f, 0.0f, 0.0f),
             slc::PIDController(0.01f, 0.0f, 0.0f),
-            -90.0f, 90.0f);
+            -90.0f, 90.0f));
 
-    hip.angle(0);
-    knee.angle(0);
+    // setup communications
+    auto usb = std::make_unique<slc::USBSerial>(&hUsbDeviceFS);
+    usb->register_it();
+    auto server = std::make_unique<slc::PacketServer>(
+            std::move(usb), hcrc, MAGIC_BYTE, BUFFER_LENGTH);
+    server->register_handler(3, led_handler);
+    server->register_handler(4, controller.get_pid_handler());
+    server->register_handler(5, controller.get_power_handler());
+    server->register_handler(6, controller.get_angle_handler());
+    server->register_handler(7, controller.get_speed_handler());
+
 
     /* USER CODE END 2 */
 
@@ -289,8 +293,8 @@ int main(void)
         // read distance sensors
         system_status.distance = distance_sensor.meters();
 
-        hip.tick();
-        knee.tick();
+        // run the motor controller
+        controller.tick();
 
         // update LED state
         red_led.write(led_state & 1);

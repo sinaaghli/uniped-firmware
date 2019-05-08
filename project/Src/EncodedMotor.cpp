@@ -164,14 +164,14 @@ namespace slc {
         return std::bind(&EncodedMotor::tick, this);
     }
 
-    PIDController &EncodedMotor::get_position_controller()
+    PIDController *EncodedMotor::get_position_controller()
     {
-        return position_pid_;
+        return &position_pid_;
     }
 
-    PIDController &EncodedMotor::get_velocity_controller()
+    PIDController *EncodedMotor::get_velocity_controller()
     {
-        return velocity_pid_;
+        return &velocity_pid_;
     }
 
 }
