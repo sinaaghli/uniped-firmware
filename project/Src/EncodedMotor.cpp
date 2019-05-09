@@ -20,6 +20,7 @@ namespace slc {
               encoder_(std::move(encoder)),
               position_pid_(position_pid), velocity_pid_(velocity_pid)
     {
+        drift();
     }
 
     EncodedMotor::EncodedMotor(
@@ -32,6 +33,7 @@ namespace slc {
               position_pid_(position_pid), velocity_pid_(velocity_pid),
               min_angle_(min_angle), max_angle_(max_angle)
     {
+        drift();
     }
 
     void EncodedMotor::forward(int power)

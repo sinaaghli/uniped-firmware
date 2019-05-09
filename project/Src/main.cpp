@@ -138,8 +138,10 @@ typedef struct __attribute__((packed))
 {
     uint32_t msec;
     float hip_angle;
+    float hip_rpm;
     float hip_current;
     float knee_angle;
+    float knee_rpm;
     float knee_current;
     float distance;
 } SystemStatus;
@@ -195,8 +197,10 @@ int main(void)
     SystemStatus system_status{
             .msec = 0,
             .hip_angle = 0.0,
+            .hip_rpm = 0.0,
             .hip_current = 0.0,
             .knee_angle = 0.0,
+            .knee_rpm = 0.0,
             .knee_current = 0.0,
             .distance = 0.0};
 
@@ -239,7 +243,7 @@ int main(void)
             slc::PWM(&htim3, TIM_CHANNEL_2, 100),
             slc::GPIO(Knee_C_GPIO_Port, Knee_C_Pin),
             slc::GPIO(Knee_D_GPIO_Port, Knee_D_Pin),
-            hip_encoder,
+            knee_encoder,
             slc::PIDController(0.01f, 0.0f, 0.0f),
             slc::PIDController(0.01f, 0.0f, 0.0f),
             -90.0f, 90.0f));
@@ -281,10 +285,12 @@ int main(void)
             server->receive_packet();
         }
 
-        // read hip and knee angle
+        // read hip and knee angle and rpm
         angle_driver->sample(false);
         system_status.hip_angle = hip_encoder->degrees().second;
+        system_status.hip_rpm = hip_encoder->rpm().second;
         system_status.knee_angle = knee_encoder->degrees().second;
+        system_status.knee_rpm = knee_encoder->rpm().second;
 
         // read hip and knee current sensors
         system_status.hip_current = hip_current_meter.amps();

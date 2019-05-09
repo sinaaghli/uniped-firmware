@@ -96,7 +96,7 @@ namespace slc {
     typedef struct __attribute__((packed))
     {
         uint8_t motor;
-        uint8_t mode;  // 1 = forward, 2 = reverse, 3 = stop, 4 = stop
+        uint8_t mode;  // 1 = forward, 2 = reverse, 3 = stop, 4 = drift
         uint8_t power;
     } PowerMessage_;
 
