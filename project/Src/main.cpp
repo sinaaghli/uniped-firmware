@@ -192,7 +192,7 @@ int main(void)
 #define BUFFER_LENGTH 512
 #define MAGIC_BYTE 123
 
-    int delay = 50;
+    int delay = 5;
 
     SystemStatus system_status{
             .msec = 0,
@@ -216,8 +216,8 @@ int main(void)
     auto angle_driver = std::make_shared<slc::AS5045Driver>(
             std::make_unique<slc::SerialPeripheralInterface>(
                     &hspi2, NSS2_GPIO_Port, NSS2_Pin), 2);
-    auto hip_encoder = std::make_shared<slc::AS5045>(angle_driver, 0, false);
-    auto knee_encoder = std::make_shared<slc::AS5045>(angle_driver, 1, false);
+    auto hip_encoder = std::make_shared<slc::AS5045>(angle_driver, 0, true);
+    auto knee_encoder = std::make_shared<slc::AS5045>(angle_driver, 1, true);
     angle_driver->sample(true);
     hip_encoder->calibrate();  // initial angle is 0
     knee_encoder->calibrate();  // initial angle is 0
@@ -236,7 +236,7 @@ int main(void)
             slc::GPIO(Hip_C_GPIO_Port, Hip_C_Pin),
             slc::GPIO(Hip_D_GPIO_Port, Hip_D_Pin),
             hip_encoder,
-            slc::PIDController(0.01f, 0.0f, 0.0f),
+            slc::PIDController(0.002f, 0.0f, 0.0f),
             slc::PIDController(0.01f, 0.0f, 0.0f),
             -90.0f, 90.0f));
     controller.add_motor(std::make_unique<slc::EncodedMotor>(
@@ -244,7 +244,7 @@ int main(void)
             slc::GPIO(Knee_C_GPIO_Port, Knee_C_Pin),
             slc::GPIO(Knee_D_GPIO_Port, Knee_D_Pin),
             knee_encoder,
-            slc::PIDController(0.01f, 0.0f, 0.0f),
+            slc::PIDController(0.002f, 0.0f, 0.0f),
             slc::PIDController(0.01f, 0.0f, 0.0f),
             -90.0f, 90.0f));
 

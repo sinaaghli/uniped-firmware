@@ -148,7 +148,7 @@ namespace slc {
                     100.0f, pid_output.value() * 100)));
             if (power == 0)
             {
-                Motor::stop(100);
+                Motor::drift();
             }
             else if (power < 0)
             {

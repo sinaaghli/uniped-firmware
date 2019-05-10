@@ -111,7 +111,7 @@ class Controller(QWidget):
 
     def add_position_pid_hip_group(self, layout):
         self.hip_position_proportional_gain = QLineEdit(self)
-        self.hip_position_proportional_gain.setText('0.01')
+        self.hip_position_proportional_gain.setText('0.002')
         self.hip_position_proportional_gain.setValidator(QDoubleValidator())
 
         self.hip_position_integral_gain = QLineEdit(self)
@@ -135,7 +135,7 @@ class Controller(QWidget):
 
     def add_position_pid_knee_group(self, layout):
         self.knee_position_proportional_gain = QLineEdit(self)
-        self.knee_position_proportional_gain.setText('0.01')
+        self.knee_position_proportional_gain.setText('0.002')
         self.knee_position_proportional_gain.setValidator(QDoubleValidator())
 
         self.knee_position_integral_gain = QLineEdit(self)
