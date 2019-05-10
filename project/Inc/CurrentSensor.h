@@ -7,9 +7,17 @@
 
 namespace slc {
 
+    /** Current sensor interface.
+     *
+     */
     class CurrentSensor
     {
     public:
+
+        /** Get the current in amperes.
+         *
+         * @return current in amperes
+         */
         virtual float amps() const = 0;
 
     };

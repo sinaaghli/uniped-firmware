@@ -9,6 +9,9 @@
 
 namespace slc {
 
+    /** Object oriented interface to a PWM output.
+     *
+     */
     class PWM
     {
     public:

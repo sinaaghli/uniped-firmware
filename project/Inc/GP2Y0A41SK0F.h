@@ -11,6 +11,9 @@
 
 namespace slc {
 
+    /** GP2Y0A41SKOF optical distance sensor.
+     *
+     */
     class GP2Y0A41SK0F : public DistanceSensor
     {
     public:

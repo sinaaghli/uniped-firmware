@@ -15,10 +15,24 @@
 
 namespace slc {
 
+    /** Angular encoder base class.
+     *
+     * Angular encoders are sensors that read an angle as a integer in a
+     * range from 0 to a given maximum.
+     *
+     * With the exception of raw_value, this class uses continuous angles,
+     * in other words a full rotation forward is 360 degrees and a full
+     * rotation backwards is -360, not 0.
+     *
+     */
     class AngularEncoder : virtual Sensor
     {
     public:
 
+        /** Get the raw encoder value.
+         *
+         * @return pair of sample count and raw value
+         */
         virtual std::pair<size_t, int> raw_value() const = 0;
 
         void calibrate(int position = 0);
@@ -41,7 +55,7 @@ namespace slc {
 
     protected:
         explicit AngularEncoder(
-                unsigned int positions_per_revolution,
+                unsigned int revolution_size,
                 bool reversed = false, int zero_offset = 0);
 
     private:

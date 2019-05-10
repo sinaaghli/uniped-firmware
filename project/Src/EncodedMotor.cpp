@@ -11,7 +11,15 @@
 
 namespace slc {
 
-
+    /** Construct an encoded motor without bounding angles.
+     *
+     * @param enable PWM object connected to the enable pin the H bridge
+     * @param c input 1 of the H bridge
+     * @param d input 2 of the H bridge
+     * @param encoder angular encoder attached to the motor
+     * @param position_pid PID controller for angle setpoints
+     * @param velocity_pid PID controller for RPM setpoints
+     */
     EncodedMotor::EncodedMotor(
             PWM enable, GPIO c, GPIO d,
             std::shared_ptr<AngularEncoder> encoder,
@@ -23,6 +31,19 @@ namespace slc {
         drift();
     }
 
+    /** Construct an encoded motor with bounding angles.
+     *
+     * @param enable PWM object connected to the enable pin the H bridge
+     * @param c input 1 of the H bridge
+     * @param d input 2 of the H bridge
+     * @param encoder angular encoder attached to the motor
+     * @param position_pid PID controller for angle setpoints
+     * @param velocity_pid PID controller for RPM setpoints
+     * @param min_angle minimum angle (in degrees) that the motor is allowed
+     *                  to have, when below this the motor will stop
+     * @param max_angle maximum angle (in degrees) that the motor is allowed
+     *                  to have, when above this the motor will stop
+     */
     EncodedMotor::EncodedMotor(
             PWM enable, GPIO c, GPIO d,
             std::shared_ptr<AngularEncoder> encoder,
@@ -36,30 +57,57 @@ namespace slc {
         drift();
     }
 
+    /** Turn on motor in the forward direction.
+     *
+     * Sets mode to "power".
+     *
+     * @param power power between 0 (min) and 100 (max)
+     */
     void EncodedMotor::forward(int power)
     {
         mode_ = EncodedMotorMode::power_forward;
         Motor::forward(power);
     }
 
+    /** Turn on motor in the reverse direction.
+     *
+     * Sets mode to "power" control.
+     *
+     * @param power power between 0 (min) and 100 (max)
+     */
     void EncodedMotor::reverse(int power)
     {
         mode_ = EncodedMotorMode::power_reverse;
         Motor::reverse(power);
     }
 
+    /** Enable breaking mode.
+     *
+     * Sets mode to "power" control.
+     *
+     * @param power power between 0 (min) and 100 (max)
+     */
     void EncodedMotor::stop(int power)
     {
         mode_ = EncodedMotorMode::power_stop;
         Motor::stop(power);
     }
 
+    /** Enable free floating mode.
+     *
+     * Sets mode to "power" control.
+     *
+     */
     void EncodedMotor::drift()
     {
         mode_ = EncodedMotorMode::power_drift;
         Motor::drift();
     }
 
+    /** Enable angle control mode and set desired angle.
+     *
+     * @param degrees angle setpoint in degrees
+     */
     void EncodedMotor::angle(float degrees)
     {
         mode_ = EncodedMotorMode::angle;
@@ -74,13 +122,20 @@ namespace slc {
         position_pid_.set_target(degrees);
     }
 
+    /** Enable speed control mode and set desired speed.
+     *
+     * @param rpm speed setpoint in RPM
+     */
     void EncodedMotor::speed(float rpm)
     {
         mode_ = EncodedMotorMode::speed;
         velocity_pid_.set_target(rpm);
     }
 
-    void EncodedMotor::bounds_check()
+    /** Call from tick to stop motor from going outside of bounds.
+     *
+     */
+    void EncodedMotor::bounds_check_()
     {
         switch (mode_)
         {
@@ -113,10 +168,13 @@ namespace slc {
         }
     }
 
+    /** Call frequently to run single iteration control loop.
+     *
+     */
     void EncodedMotor::tick()
     {
         std::optional<float> pid_output;
-        bounds_check();
+        bounds_check_();
         switch (mode_)
         {
             case EncodedMotorMode::angle:
@@ -161,16 +219,29 @@ namespace slc {
         }
     }
 
+    /** Get function bound to this instance that calls tick.
+     *
+     * @return function bound to this instance that runs single iteration
+     *         of control loop
+     */
     std::function<void()> EncodedMotor::get_ticker()
     {
         return std::bind(&EncodedMotor::tick, this);
     }
 
+    /** Get pointer of position PID controller.
+     *
+     * @return pointer to PID controller used for position
+     */
     PIDController *EncodedMotor::get_position_controller()
     {
         return &position_pid_;
     }
 
+    /** Get pointer of angular speed PID controller.
+     *
+     * @return pointer to PID controller used for angular speed
+     */
     PIDController *EncodedMotor::get_velocity_controller()
     {
         return &velocity_pid_;

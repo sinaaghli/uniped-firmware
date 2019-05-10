@@ -13,6 +13,11 @@
 
 namespace slc {
 
+    /** USB serial device.
+     *
+     * Allows bidirectional communication over USB.
+     *
+     */
     class USBSerial : public virtual CharacterDevice
     {
     public:

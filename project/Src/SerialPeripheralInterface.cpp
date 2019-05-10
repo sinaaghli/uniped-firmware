@@ -15,30 +15,51 @@
 
 namespace slc {
 
+    // internal list of instances
     std::map<SPI_HandleTypeDef *, SerialPeripheralInterface *> spi_objects_;
 
+    /** Create a serial peripheral interface object.
+     *
+     * @param spi pointer to the underlying SPI structure
+     * @param chip_select_port pointer to GPIO port structure of chip select pin
+     * @param chip_select_pin GPIO pin define of chip select pin
+     */
     SerialPeripheralInterface::SerialPeripheralInterface(
             SPI_HandleTypeDef *spi,
             GPIO_TypeDef *chip_select_port, uint16_t chip_select_pin)
             : spi_(spi), chip_select_port_(chip_select_port),
               chip_select_pin_(chip_select_pin)
     {
+        // TODO: change this to use the GPIO class
         // register object
         spi_objects_[spi_] = this;
     }
 
+    /** Destructor, removes the instance from the internal list of instances.
+     *
+     */
     SerialPeripheralInterface::~SerialPeripheralInterface()
     {
         // unregister object
         spi_objects_.erase(spi_);
     }
 
+    /** Register a function to call when data is recieved.
+     *
+     * @param callback callback function, it will be given the location of a
+     *                 buffer of data and the length of the data in that
+     *                 buffer, upon return the buffer is invalid
+     */
     void SerialPeripheralInterface::register_callback(
             std::function<void(void *, size_t)> callback)
     {
         callback_ = callback;
     }
 
+    /** Remove the callback.
+     *
+     * @return true if there was a callback, false otherwise
+     */
     bool SerialPeripheralInterface::unregister_callback()
     {
         bool previous = callback_.has_value();
@@ -46,6 +67,16 @@ namespace slc {
         return previous;
     }
 
+    /** Read the SPI device.
+     *
+     * @param buffer a buffer to write the received data into
+     * @param bytes maximum number of bytes to read
+     * @param complete_flag pointer to an atomic bool to set to true when the
+     *                      read is complete, places the SPI device in
+     *                      non-blocking mode if given
+     * @return status of SPI device, success, failed, or working (if used in
+     *         non-blocking mode)
+     */
     Status SerialPeripheralInterface::read(
             void *buffer, size_t bytes, std::atomic_bool *complete_flag)
     {
@@ -93,16 +124,29 @@ namespace slc {
         }
     }
 
+    /** Is the SPI device ready.
+     *
+     * @return true if the SPI device can be read from
+     */
     bool SerialPeripheralInterface::ready() const
     {
         return spi_->State == HAL_SPI_STATE_READY;
     }
 
+    /** Is the SPI device busy.
+     *
+     * @return true if the SPI device is currently reading data.
+     */
     bool SerialPeripheralInterface::busy() const
     {
         return !ready();
     }
 
+    /** End a SPI transfer, deselects chip and calls callback if any.
+     *
+     * For internal use only.
+     *
+     */
     void SerialPeripheralInterface::complete_read_()
     {
         // disable chip select

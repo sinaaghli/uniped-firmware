@@ -7,6 +7,14 @@
 
 namespace slc {
 
+    /** Status enum.
+     *
+     * success = returned for a successful operation
+     * failed = returned for a failed operation
+     * working = returned when an operation is still underway, usally means busy
+     * idle = default status
+     *
+     */
     enum class Status
     {
         success,

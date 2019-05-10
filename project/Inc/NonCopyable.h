@@ -7,6 +7,9 @@
 
 namespace slc {
 
+    /** Inherit from this interface to make a class non-copyable.
+     *
+     */
     class NonCopyable
     {
     protected:

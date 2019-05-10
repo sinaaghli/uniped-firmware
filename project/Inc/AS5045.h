@@ -17,6 +17,11 @@
 
 namespace slc {
 
+    /** AS5045 sensor.
+     *
+     * Requires an AS5045Driver as a backend.
+     *
+     */
     class AS5045 : public AngularEncoder
     {
         friend class AS5045Chain;

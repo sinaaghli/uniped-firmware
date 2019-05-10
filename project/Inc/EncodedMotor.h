@@ -15,6 +15,11 @@
 
 namespace slc {
 
+    /** Mode of the encoded motor.
+     *
+     * For internal use only.
+     *
+     */
     enum class EncodedMotorMode
     {
         power_forward,
@@ -25,6 +30,12 @@ namespace slc {
         speed
     };
 
+    /** Encoded motor.
+     *
+     * Allows control of a DC motor attached to an H bridge that has an
+     * angular encoder.
+     *
+     */
     class EncodedMotor : public Motor
     {
     public:
@@ -57,7 +68,7 @@ namespace slc {
         std::optional<float> min_angle_;
         std::optional<float> max_angle_;
 
-        void bounds_check();
+        void bounds_check_();
 
     };
 

@@ -7,11 +7,20 @@
 
 namespace slc {
 
+    /** Distance sensor base class.
+     *
+     */
     class DistanceSensor
     {
     public:
-        float calibrate(float meters = 0.0);
+        void calibrate(float meters = 0.0);
 
+        /** Get absolute, uncalibrated distance in meters.
+         *
+         * Must be implemented in subclass.
+         *
+         * @return uncalibrated distance in meters
+         */
         virtual float absolute_meters() const = 0;
 
         float absolute_inches() const;

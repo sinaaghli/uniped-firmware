@@ -89,6 +89,10 @@ namespace slc {
         current_error_ = target_ - input;
     }
 
+    /** Get the current target.
+     *
+     * @return current target value
+     */
     float PIDController::get_target()
     {
         return target_;

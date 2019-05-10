@@ -11,6 +11,9 @@
 
 namespace slc {
 
+    /** INA169 current sensor.
+     *
+     */
     class INA169 : public CurrentSensor
     {
     public:

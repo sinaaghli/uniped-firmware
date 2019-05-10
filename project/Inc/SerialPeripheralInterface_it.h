@@ -1,5 +1,5 @@
 //
-// Created by mrshannon on 4/2/19.
+// Created by Michael R. Shannon on 4/2/19.
 //
 
 
@@ -14,6 +14,10 @@ extern "C" {
 #include <stdint.h>
 #include "stm32f4xx_hal_spi.h"
 
+/** Call this inside SPI interrupt handler.
+ *
+ * @param spi pointer to the SPI structure
+ */
 void spi_rx_complete_it(SPI_HandleTypeDef *spi);
 
 #ifdef __cplusplus

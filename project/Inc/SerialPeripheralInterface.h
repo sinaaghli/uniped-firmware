@@ -17,6 +17,11 @@
 
 namespace slc {
 
+    /** An object oriented interface to the SPI peripheral.
+     *
+     * This class maintains a list of all instances that is used for interrupt
+     * handling and thus it is non-copyable and non-movable.
+     */
     class SerialPeripheralInterface : public NonCopyable
     {
         friend void ::spi_rx_complete_it(SPI_HandleTypeDef *spi);

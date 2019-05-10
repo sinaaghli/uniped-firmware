@@ -16,6 +16,11 @@
 
 namespace slc {
 
+    /** Backend driver for the AS5045 angular encoder.
+     *
+     * One of these are needed for each daisy chain of AS5045 chips.
+     *
+     */
     class AS5045Driver : public virtual Sensor
     {
     public:

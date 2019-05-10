@@ -11,6 +11,11 @@
 
 namespace slc {
 
+    /** Represents a GPIO pin.
+     *
+     * This class provides an object oriented interface to the GPIO
+     *
+     */
     class GPIO
     {
     public:

@@ -9,17 +9,30 @@ namespace slc {
 
     using namespace std::placeholders;
 
+    /** Add an encoded motor to the controller.
+     *
+     * @param motor encoded motor to add
+     * @return index of the motor in the controller
+     */
     size_t Controller::add_motor(std::unique_ptr<EncodedMotor> motor)
     {
         motors_.push_back(std::move(motor));
         return motors_.size();
     }
 
+    /** Get pointer to a motor given the index of the motor.
+     *
+     * @param id index of motor to retrieve
+     * @return pointer to the motor requested
+     */
     EncodedMotor *Controller::motor(size_t id)
     {
         return motors_.at(id).get();
     }
 
+    /** Calls tick on each encoded motor in the controller.
+     *
+     */
     void Controller::tick()
     {
         for (auto &motor : motors_)
@@ -28,31 +41,64 @@ namespace slc {
         }
     }
 
+    /** Get a function that calls tick.
+     *
+     * @return function bound to this instance that calls tick
+     */
     std::function<void()> Controller::get_ticker()
     {
         return std::function<void()>();
     }
 
+    /** Get the message handler for the PID configuration message.
+     *
+     * @return PID config message handler, can be registered as a callback
+     *         with PacketServer
+     */
     std::function<void(void *, size_t)> Controller::get_pid_handler()
     {
         return std::bind(&Controller::pid_handler_, this, _1, _2);
     }
 
+    /** Get the message handler for the direct power control message.
+     *
+     * Directly controls the power of a motor.
+     *
+     * @return power control message handler, can be registered as a
+     *         callback with PacketServer
+     */
     std::function<void(void *, size_t)> Controller::get_power_handler()
     {
         return std::bind(&Controller::power_handler_, this, _1, _2);
     }
 
+    /** Get the message handler for the angle target control message.
+     *
+     * Sets target angle of a motor.
+     *
+     * @return angle target control message handler, can be registered
+     *         as a callback with PacketServer
+     */
     std::function<void(void *, size_t)> Controller::get_angle_handler()
     {
         return std::bind(&Controller::angle_handler_, this, _1, _2);
     }
 
+    /** Get the message handler for the speed target control message.
+     *
+     * Sets target speed of a motor.
+     *
+     * @return speed target control message handler, can be registered
+     *         as a callback with PacketServer
+     */
     std::function<void(void *, size_t)> Controller::get_speed_handler()
     {
         return std::bind(&Controller::speed_handler_, this, _1, _2);
     }
 
+    /** PID configuration message.
+     *
+     */
     typedef struct __attribute__((packed))
     {
         uint8_t motor;
@@ -93,6 +139,9 @@ namespace slc {
         pid->set_derivative_gain(message->derivative_gain);
     }
 
+    /** Direct motor control message.
+     *
+     */
     typedef struct __attribute__((packed))
     {
         uint8_t motor;
@@ -136,6 +185,9 @@ namespace slc {
         }
     }
 
+    /** Set angle target message.
+     *
+     */
     typedef struct __attribute__((packed))
     {
         uint8_t motor;
@@ -156,6 +208,9 @@ namespace slc {
         motors_.at(message->motor)->angle(message->degrees);
     }
 
+    /** Set speed target message.
+     *
+     */
     typedef struct __attribute__((packed))
     {
         uint8_t motor;

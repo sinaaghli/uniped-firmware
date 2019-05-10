@@ -13,6 +13,12 @@
 
 namespace slc {
 
+    /** Main controller class.
+     *
+     * This is used to control motor configuration and control from
+     * incoming message packets.
+     *
+     */
     class Controller
     {
     public:

@@ -10,6 +10,13 @@
 
 namespace slc {
 
+    /** Construct the optical distance sensor.
+     *
+     * @param raw_value pointer to raw value location in memory
+     *                  (from 12-bit ADC)
+     * @param reference_voltage reference voltage of ADC, defaults to 3.0 volts
+     * @param zero_offset zero offset to use
+     */
     GP2Y0A41SK0F::GP2Y0A41SK0F(
             uint16_t *raw_value, float reference_voltage, float zero_offset)
     : DistanceSensor(zero_offset),
@@ -17,6 +24,10 @@ namespace slc {
     {
     }
 
+    /** Get absolute, uncalibrated distance in meters.
+     *
+     * @return uncalibrated distance in meters
+     */
     float GP2Y0A41SK0F::absolute_meters() const
     {
         float voltage = (*raw_value_)*reference_voltage_/4096.0f;

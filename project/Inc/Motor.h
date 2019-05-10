@@ -12,6 +12,11 @@
 
 namespace slc {
 
+    /** Regular motor.
+     *
+     * Allows control of a DC motor attached to an H bridge.
+     *
+     */
     class Motor
     {
     public:
